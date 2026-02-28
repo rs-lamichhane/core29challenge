@@ -8,7 +8,7 @@ declare const L: any
 interface Alternative {
   mode: string; label: string; emoji: string
   co2Kg: number; timeMin: number; calories: number
-  enjoyment: number; tooSlow: boolean
+  enjoyment: number; tooSlow: boolean; walkToTransportKm?: number
 }
 interface POI {
   type: string; emoji: string; name: string
@@ -21,6 +21,7 @@ interface GreenSuggestion {
 interface PlanResult {
   origin: string; destination: string; distanceKm: number
   alternatives: Alternative[]; greenSuggestion: GreenSuggestion | null; pois: POI[]
+  originLat?: number; originLng?: number; destLat?: number; destLng?: number;
 }
 
 const MODES = [
@@ -33,7 +34,7 @@ const MODES = [
   { value: 'plane', label: '✈️  Plane' },
 ]
 
-type Tab = 'plan' | 'nearby'
+type Tab = 'plan' | 'nearby' | 'dashboard'
 
 // ── Helpers ──
 const FALLBACK_MODES_DATA = [
@@ -49,10 +50,12 @@ const FALLBACK_MODES_DATA = [
 function buildFallback(origin: string, dest: string, preferredMode: string, timeAvail: number | null): PlanResult {
   const dist = 12 + origin.length + dest.length
   const alts: Alternative[] = FALLBACK_MODES_DATA.map(m => {
+    let walkToTransportKm = 0;
+    if (m.mode === 'bus' || m.mode === 'train' || m.mode === 'plane') walkToTransportKm = 0.5;
     const co2Kg = Math.round(m.co2PerKm * dist * 1000) / 1000
-    const timeMin = Math.round((dist / m.speedKmh) * 60)
-    const calories = Math.round(m.calPerKm * dist)
-    return { mode: m.mode, label: m.label, emoji: m.emoji, co2Kg, timeMin, calories, enjoyment: m.enjoyment, tooSlow: timeAvail ? timeMin > timeAvail : false }
+    const timeMin = Math.round((dist / m.speedKmh) * 60) + (walkToTransportKm / 5) * 60;
+    const calories = Math.round(m.calPerKm * dist) + 50 * walkToTransportKm;
+    return { mode: m.mode, label: m.label, emoji: m.emoji, co2Kg, timeMin, calories, enjoyment: m.enjoyment, tooSlow: timeAvail ? timeMin > timeAvail : false, walkToTransportKm }
   }).sort((a, b) => a.co2Kg - b.co2Kg)
 
   const pref = alts.find(a => a.mode === preferredMode)
@@ -105,8 +108,19 @@ function App() {
   // Nearby state
   const [nearbyPois, setNearbyPois] = useState<POI[]>([])
   const [nearbyLoading, setNearbyLoading] = useState(false)
+  const [selectedNearbyPoi, setSelectedNearbyPoi] = useState<POI | null>(null)
   const nearbyMapRef = useRef<HTMLDivElement>(null)
   const nearbyMapInstance = useRef<any>(null)
+
+  // Auth & User state
+  const [user, setUser] = useState<{ id: number, username: string, token: string } | null>(null)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login')
+  const [authUsername, setAuthUsername] = useState('')
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+  const [userStats, setUserStats] = useState<any>(null)
 
   // ── GPS ──
   const handleUseMyLocation = () => {
@@ -182,11 +196,36 @@ function App() {
     }
   }
 
-  // ── Route map ──
-  const showRoute = useCallback((alt: Alternative) => {
+  // ── Route map & Journey Saving ──
+  const showRoute = useCallback(async (alt: Alternative) => {
     setSelectedRoute(alt)
     setShowRouteMap(true)
-  }, [])
+
+    // Save Journey if logged in
+    if (user && result) {
+      try {
+        const carAlt = result.alternatives.find(a => a.mode === 'car');
+        const co2Saved = carAlt ? Math.max(0, carAlt.co2Kg - alt.co2Kg) : 0;
+        await fetch('http://localhost:3000/api/journeys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            origin: result.origin,
+            destination: result.destination,
+            distanceKm: result.distanceKm,
+            transportMode: alt.mode,
+            co2SavedKg: co2Saved,
+            caloriesBurned: alt.calories,
+            travelTimeMin: alt.timeMin
+          })
+        });
+        loadUserStats(user.id); // Refresh stats
+      } catch (e) {
+        console.error('Failed to save journey', e)
+      }
+    }
+  }, [user, result])
 
   useEffect(() => {
     if (!showRouteMap || !routeMapRef.current || !result) return
@@ -195,10 +234,10 @@ function App() {
       routeMapInstance.current.remove()
       routeMapInstance.current = null
     }
-    const oLat = userLat || 57.15
-    const oLng = userLng || -2.11
-    const dLat = oLat + (result.distanceKm / 111) * 0.7
-    const dLng = oLng + (result.distanceKm / 85) * 0.7
+    const oLat = result.originLat || userLat || 57.15
+    const oLng = result.originLng || userLng || -2.11
+    const dLat = result.destLat || oLat + (result.distanceKm / 111) * 0.7
+    const dLng = result.destLng || oLng + (result.distanceKm / 85) * 0.7
 
     const map = L.map(routeMapRef.current).fitBounds([[oLat, oLng], [dLat, dLng]], { padding: [40, 40] })
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -228,6 +267,7 @@ function App() {
   // ── Nearby discovery ──
   const loadNearby = useCallback(async () => {
     setNearbyLoading(true)
+    setSelectedNearbyPoi(null)
     const lat = userLat || 57.15
     const lng = userLng || -2.11
     try {
@@ -267,27 +307,68 @@ function App() {
     L.circleMarker([lat, lng], { radius: 10, color: '#00ff88', fillColor: '#00ff88', fillOpacity: 0.9 })
       .addTo(map).bindPopup('<b>📍 You are here</b>').openPopup()
 
-    // POI markers
     nearbyPois.forEach(poi => {
       if (poi.lat && poi.lng) {
         const colors: Record<string, string> = {
           bus_stop: '#f59e0b', bike_share: '#10b981', train_station: '#6366f1',
-          taxi_rank: '#ec4899', car_park: '#8b5cf6', scooter: '#06b6d4',
+          taxi_rank: '#ec4899', car_park: '#8b5cf6', scooter: '#06b6d4', airport: '#14b8a6'
         }
         L.circleMarker([poi.lat, poi.lng], { radius: 7, color: colors[poi.type] || '#00d4ff', fillColor: colors[poi.type] || '#00d4ff', fillOpacity: 0.8 })
           .addTo(map).bindPopup(`${poi.emoji} <b>${poi.name}</b><br>${poi.distanceKm} km • ${poi.nextDeparture}`)
       }
     })
 
+    if (selectedNearbyPoi && selectedNearbyPoi.lat && selectedNearbyPoi.lng) {
+      L.polyline([[lat, lng], [selectedNearbyPoi.lat, selectedNearbyPoi.lng]], { color: '#00ff88', weight: 4, dashArray: '10, 10' }).addTo(map)
+      map.fitBounds([[lat, lng], [selectedNearbyPoi.lat, selectedNearbyPoi.lng]], { padding: [40, 40] })
+    }
+
     nearbyMapInstance.current = map
     setTimeout(() => map.invalidateSize(), 100)
-  }, [activeTab, nearbyPois, userLat, userLng])
+  }, [activeTab, nearbyPois, userLat, userLng, selectedNearbyPoi])
 
   useEffect(() => {
-    if (activeTab === 'nearby' && nearbyPois.length === 0) {
-      loadNearby()
+    if (activeTab === 'dashboard' && user) {
+      loadUserStats(user.id);
     }
-  }, [activeTab, nearbyPois.length, loadNearby])
+  }, [activeTab, user])
+
+  const loadUserStats = async (userId: number) => {
+    try {
+      const r = await fetch(`http://localhost:3000/api/user/stats?userId=${userId}`)
+      const data = await r.json()
+      setUserStats(data)
+    } catch (e) { console.error('Failed to load stats') }
+  }
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    try {
+      const endpoint = authMode === 'login' ? '/api/login' : '/api/register';
+      const body = authMode === 'login' ? { username: authUsername, password: authPassword } : { username: authUsername, email: authEmail, password: authPassword };
+      const r = await fetch(`http://localhost:3000${endpoint}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || 'Auth failed');
+
+      if (authMode === 'login') {
+        setUser({ ...data.user, token: data.token });
+        setShowAuthModal(false);
+        setActiveTab('dashboard');
+        loadUserStats(data.user.id);
+      } else {
+        setAuthMode('login'); // switch to login after successful register
+        setAuthError('Registration successful! Please login.');
+      }
+    } catch (err: any) {
+      setAuthError(err.message);
+    }
+  }
+
+  const logout = () => { setUser(null); setUserStats(null); setActiveTab('plan'); }
 
   const maxCo2 = result ? Math.max(...result.alternatives.map(a => a.co2Kg), 0.001) : 1
 
@@ -295,7 +376,16 @@ function App() {
     <div className="app-container">
       {/* ── Hero ── */}
       <header className="hero">
-        <h1 className="hero-text">EcoJourney</h1>
+        <div className="hero-top">
+          <h1 className="hero-text">EcoJourney</h1>
+          <div className="auth-controls">
+            {user ? (
+              <button className="btn btn-sm btn-outline" onClick={logout}>Logout ({user.username})</button>
+            ) : (
+              <button className="btn btn-sm btn-outline" onClick={() => setShowAuthModal(true)}>Login / Register</button>
+            )}
+          </div>
+        </div>
         <p className="hero-sub">Plan smarter. Travel greener. Every kilometre counts.</p>
       </header>
 
@@ -307,6 +397,11 @@ function App() {
         <button className={`tab-btn ${activeTab === 'nearby' ? 'active' : ''}`} onClick={() => setActiveTab('nearby')}>
           📍 Transport Near Me
         </button>
+        {user && (
+          <button className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+            📊 My Dashboard
+          </button>
+        )}
       </nav>
 
       {/* ══════════════════ PLAN TAB ══════════════════ */}
@@ -370,9 +465,9 @@ function App() {
               {result.greenSuggestion && (
                 <div className="green-banner glass" id="green-suggestion">
                   <span className="green-banner-emoji">{result.greenSuggestion.suggestedEmoji}</span>
-                  <div>
-                    <strong>Switch to {result.greenSuggestion.suggestedMode}</strong> and save{' '}
-                    <span className="highlight">{result.greenSuggestion.co2SavedKg} kg CO₂</span> compared to {result.greenSuggestion.currentMode}!
+                  <div className="recommendation-text">
+                    <strong>💡 Smart Recommendation:</strong> We highly recommend taking the {result.greenSuggestion.suggestedMode} instead of {result.greenSuggestion.currentMode} for this {result.distanceKm} km trip.
+                    <br />You'll save <span className="highlight">{result.greenSuggestion.co2SavedKg} kg CO₂</span> and earn <strong>{Math.floor(result.greenSuggestion.co2SavedKg * 10) + 5} Eco Points</strong>!
                   </div>
                 </div>
               )}
@@ -398,9 +493,11 @@ function App() {
                           </div>
                           <div className="alt-stats">
                             <div className="stat"><span className="stat-value">{alt.co2Kg}</span><span className="stat-label">kg CO₂</span></div>
-                            <div className="stat"><span className="stat-value">{alt.timeMin}</span><span className="stat-label">min</span></div>
-                            <div className="stat"><span className="stat-value">{alt.calories || '—'}</span><span className="stat-label">cal</span></div>
-                            <div className="stat"><span className="stat-value enjoyment-stars">{stars(alt.enjoyment)}</span><span className="stat-label">enjoyment</span></div>
+                            <div className="stat"><span className="stat-value">{Math.round(alt.timeMin)}</span><span className="stat-label">min</span></div>
+                            {alt.walkToTransportKm && alt.walkToTransportKm > 0 ? (
+                              <div className="stat"><span className="stat-value">{alt.walkToTransportKm}</span><span className="stat-label">km walk</span></div>
+                            ) : null}
+                            <div className="stat"><span className="stat-value enjoyment-stars">{stars(alt.enjoyment)}</span><span className="stat-label">enjoy</span></div>
                           </div>
                           <div className="co2-bar-bg"><div className="co2-bar" style={{ width: `${barWidth}%` }} /></div>
                           <button type="button" className="btn btn-take-route" onClick={() => showRoute(alt)}>
@@ -485,10 +582,77 @@ function App() {
                       <span className="poi-dist">{poi.distanceKm} km away</span>
                       {poi.nextDeparture && <span className="poi-departure">🕐 {poi.nextDeparture}</span>}
                     </div>
+                    <button type="button" className="btn btn-sm btn-outline" style={{ marginLeft: 'auto' }} onClick={() => setSelectedNearbyPoi(poi)}>
+                      🚶 Route
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════ DASHBOARD TAB ══════════════════ */}
+      {activeTab === 'dashboard' && user && (
+        <div className="dashboard-section fade-in">
+          <div className="glass">
+            <h2>🌍 Dashboard — {user.username}</h2>
+            <p className="subtitle">Your environmental impact tracked over time</p>
+
+            {userStats ? (
+              <div className="stats-grid">
+                <div className="stat-card score-card" style={{ gridColumn: '1 / -1', background: 'rgba(0, 255, 136, 0.1)', borderColor: 'var(--primary)' }}>
+                  <span className="stat-emoji">🌟</span>
+                  <h3>{Math.floor(Number(userStats.total_co2_saved || 0) * 10 + Number(userStats.journeys || 0) * 5)}</h3>
+                  <p>Total Eco Score</p>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-emoji">🌱</span>
+                  <h3>{Number(userStats.today_co2 || 0).toFixed(2)} kg</h3>
+                  <p>CO₂ Saved Today</p>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-emoji">🌳</span>
+                  <h3>{Number(userStats.total_co2_saved || 0).toFixed(1)} kg</h3>
+                  <p>Total CO₂ Saved</p>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-emoji">🔥</span>
+                  <h3>{Number(userStats.total_calories_burned || 0)}</h3>
+                  <p>Calories Burned</p>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-emoji">🌲</span>
+                  <h3>{Math.floor(Number(userStats.total_co2_saved || 0) / 21)}</h3>
+                  <p>Equivalent Trees Saved</p>
+                </div>
+              </div>
+            ) : (
+              <p>Loading stats...</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Auth Modal ── */}
+      {showAuthModal && (
+        <div className="modal-backdrop">
+          <div className="modal-content glass">
+            <h2>{authMode === 'login' ? 'Login' : 'Register'}</h2>
+            <form onSubmit={handleAuth} className="auth-form">
+              <input type="text" placeholder="Username" value={authUsername} onChange={e => setAuthUsername(e.target.value)} required />
+              {authMode === 'register' && (
+                <input type="email" placeholder="Email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} required />
+              )}
+              <input type="password" placeholder="Password" value={authPassword} onChange={e => setAuthPassword(e.target.value)} required />
+              {authError && <p className="error-text">{authError}</p>}
+              <button type="submit" className="btn btn-primary">{authMode === 'login' ? 'Login' : 'Register'}</button>
+            </form>
+            <button className="btn btn-text mt-2" onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}>
+              {authMode === 'login' ? "Don't have an account? Register" : "Already have an account? Login"}
+            </button>
+            <button className="btn btn-text close-modal" onClick={() => setShowAuthModal(false)}>Close</button>
           </div>
         </div>
       )}
