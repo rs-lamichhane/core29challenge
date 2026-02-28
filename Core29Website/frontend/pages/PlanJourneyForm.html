@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan</title>
+</head>
+
+<body>
+    <form action="">
+        <h2>Plan your journey</h2>
+        <!-- <label>Plan your journey</label>
+        <input> -->
+        <label for="method">Travel method:</label>
+        <input type="method" id="method" name="method">
+
+        <label for="start">Starting point:</label>
+        <input type="text" id="start" name="start">
+
+        <label for="end">Destignation:</label>
+        <input type="text" id="end" name="end">
+
+        <label for="time">Time avalible:</label>
+        <input type="time" id="time" name="time">
+
+        <button type="submit">Plan</button>
+    </form>
+</body>
+<script>
+    const form = document.querySelector('form');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const method = document.getElementById('method').value;
+        const start = document.getElementById('start').value;
+        const end = document.getElementById('end').value;
+        const time = document.getElementById('time').value;
+        console.log(method, start, end, time);
+    });
+</script>
+
+</html>
