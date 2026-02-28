@@ -26,8 +26,18 @@ services:
     build: 
       context: ./frontend
       args:
-        - VITE_API_URL=http://localhost:3000
+        - VITE_API_URL=https://api.sydney.it.com
     ports:
       - "80:80"
     depends_on:
+      - backend
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --config /home/nonroot/.cloudflared/config.yml run
+    volumes:
+      - ./cloudflared:/home/nonroot/.cloudflared
+    restart: always
+    depends_on:
+      - frontend
       - backend

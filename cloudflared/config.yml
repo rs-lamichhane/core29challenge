@@ -1,0 +1,9 @@
+tunnel: fa8d7d9b-de4f-43c8-a664-d1499bccf5b1
+credentials-file: /home/nonroot/.cloudflared/fa8d7d9b-de4f-43c8-a664-d1499bccf5b1.json
+
+ingress:
+  - hostname: app.sydney.it.com
+    service: http://frontend:80
+  - hostname: api.sydney.it.com
+    service: http://backend:3000
+  - service: http_status:404
