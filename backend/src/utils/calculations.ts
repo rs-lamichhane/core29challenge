@@ -1,4 +1,4 @@
-export type TransportMode = 'walk' | 'cycle' | 'e-scooter' | 'bus' | 'train' | 'drive';
+export type TransportMode = 'walk' | 'cycle' | 'e-scooter' | 'bus' | 'train' | 'drive' | 'boat' | 'plane';
 
 interface ModeConfig {
   speed_kmh: number;
@@ -14,6 +14,8 @@ const MODE_CONFIG: Record<TransportMode, ModeConfig> = {
   bus:        { speed_kmh: 20, overhead_min: 5, co2_g_per_km: 80,  calories_per_km: 0  },
   train:      { speed_kmh: 35, overhead_min: 8, co2_g_per_km: 40,  calories_per_km: 0  },
   drive:      { speed_kmh: 30, overhead_min: 3, co2_g_per_km: 170, calories_per_km: 0  },
+  boat:       { speed_kmh: 25, overhead_min: 15, co2_g_per_km: 120, calories_per_km: 0 },
+  plane:      { speed_kmh: 800, overhead_min: 90, co2_g_per_km: 255, calories_per_km: 0 },
 };
 
 export interface JourneyCalculation {

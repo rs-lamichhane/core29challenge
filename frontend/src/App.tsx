@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from './utils/api';
+import { SettingsProvider, useSettings } from './utils/SettingsContext';
 import AuthPage from './components/AuthPage';
 import Header from './components/Header';
 import JourneyInput from './components/JourneyInput';
@@ -7,6 +8,9 @@ import ResultsComparison from './components/ResultsComparison';
 import Dashboard from './components/Dashboard';
 import AchievementToast from './components/AchievementToast';
 import ChatBot from './components/ChatBot';
+import SettingsPanel from './components/SettingsPanel';
+import DynamicBackground from './components/DynamicBackground';
+import LanguageBar from './components/LanguageBar';
 
 type View = 'input' | 'results' | 'dashboard';
 
@@ -16,7 +20,8 @@ interface AuthUser {
   email?: string;
 }
 
-export default function App() {
+function AppInner() {
+  const { setTotalCo2Saved } = useSettings();
   const [view, setView] = useState<View>('input');
   const [user, setUser] = useState<AuthUser | null>(null);
   const [demoMode, setDemoMode] = useState(false);
@@ -24,14 +29,13 @@ export default function App() {
   const [summary, setSummary] = useState<any>(null);
   const [toastAchievements, setToastAchievements] = useState<any[]>([]);
 
-  // Check for saved session on mount
   useEffect(() => {
     const saved = localStorage.getItem('greenroute_user');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setUser(parsed);
-        setDemoMode(!parsed.email); // demo user has no email
+        setDemoMode(!parsed.email);
       } catch {
         localStorage.removeItem('greenroute_user');
       }
@@ -45,10 +49,9 @@ export default function App() {
     try {
       const s = await api.getUserSummary(user.id);
       setSummary(s);
-    } catch {
-      // Silently fail - DB might not be ready
-    }
-  }, [user]);
+      setTotalCo2Saved(s.total_co2_saved_g || 0);
+    } catch {}
+  }, [user, setTotalCo2Saved]);
 
   useEffect(() => {
     if (user) refreshSummary();
@@ -68,7 +71,6 @@ export default function App() {
       setDemoMode(true);
       localStorage.setItem('greenroute_user', JSON.stringify(demoUser));
     } catch {
-      // Fallback if DB isn't ready
       setUser({ id: 1, name: 'You' });
       setDemoMode(true);
     }
@@ -97,13 +99,14 @@ export default function App() {
     if (v === 'dashboard') refreshSummary();
   };
 
-  // Show auth page if not logged in
   if (!user) {
     return <AuthPage onLogin={handleLogin} onDemoLogin={handleDemoLogin} />;
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      <DynamicBackground />
+      <LanguageBar />
       <Header
         view={view}
         onNavigate={handleNavigate}
@@ -116,18 +119,10 @@ export default function App() {
 
       <main className="max-w-4xl mx-auto px-4 pb-8">
         {view === 'input' && (
-          <JourneyInput
-            userId={userId}
-            demoMode={demoMode}
-            onJourneyLogged={handleJourneyLogged}
-          />
+          <JourneyInput userId={userId} demoMode={demoMode} onJourneyLogged={handleJourneyLogged} />
         )}
         {view === 'results' && lastResult && (
-          <ResultsComparison
-            result={lastResult}
-            onLogAnother={() => setView('input')}
-            onViewDashboard={() => handleNavigate('dashboard')}
-          />
+          <ResultsComparison result={lastResult} onLogAnother={() => setView('input')} onViewDashboard={() => handleNavigate('dashboard')} />
         )}
         {view === 'dashboard' && (
           <Dashboard userId={userId} summary={summary} onRefresh={refreshSummary} />
@@ -135,14 +130,34 @@ export default function App() {
       </main>
 
       {toastAchievements.length > 0 && (
-        <AchievementToast
-          achievements={toastAchievements}
-          onDismiss={() => setToastAchievements([])}
-        />
+        <AchievementToast achievements={toastAchievements} onDismiss={() => setToastAchievements([])} />
       )}
 
-      {/* AI Chatbot - right side panel */}
       <ChatBot />
+      <SettingsPanel />
+
+      {/* SVG filters for colour blind modes */}
+      <svg className="absolute w-0 h-0" aria-hidden="true">
+        <defs>
+          <filter id="protanopia-filter">
+            <feColorMatrix type="matrix" values="0.567,0.433,0,0,0 0.558,0.442,0,0,0 0,0.242,0.758,0,0 0,0,0,1,0" />
+          </filter>
+          <filter id="deuteranopia-filter">
+            <feColorMatrix type="matrix" values="0.625,0.375,0,0,0 0.7,0.3,0,0,0 0,0.3,0.7,0,0 0,0,0,1,0" />
+          </filter>
+          <filter id="tritanopia-filter">
+            <feColorMatrix type="matrix" values="0.95,0.05,0,0,0 0,0.433,0.567,0,0 0,0.475,0.525,0,0 0,0,0,1,0" />
+          </filter>
+        </defs>
+      </svg>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <SettingsProvider>
+      <AppInner />
+    </SettingsProvider>
   );
 }

@@ -1,8 +1,9 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, ArrowRight, Sparkles, Navigation, Map } from 'lucide-react';
+import { MapPin, ArrowRight, Sparkles, Navigation, Map, Zap, ChevronDown } from 'lucide-react';
 import { api } from '../utils/api';
-import { TRANSPORT_MODES, DEMO_QUICK_FILLS } from '../utils/constants';
+import { TRANSPORT_MODES, DEMO_QUICK_FILLS, SMART_ROUTES, t } from '../utils/constants';
+import { useSettings } from '../utils/SettingsContext';
 
 const MapPicker = lazy(() => import('./MapPicker'));
 
@@ -21,6 +22,7 @@ interface Location {
 }
 
 export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Props) {
+  const { language, speak } = useSettings();
   const [distance, setDistance] = useState<string>('');
   const [mode, setMode] = useState<string>('cycle');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -28,6 +30,7 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
   const [error, setError] = useState('');
   const [showMap, setShowMap] = useState(false);
   const [mapRoute, setMapRoute] = useState<string | null>(null);
+  const [showSmartRoutes, setShowSmartRoutes] = useState(false);
 
   // Locations
   const [locations, setLocations] = useState<Location[]>([]);
@@ -110,6 +113,18 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
     setStartLocationId('');
     setEndLocationId('');
     setShowMap(false);
+    speak(`Route selected, ${distanceKm} kilometres`);
+  };
+
+  const handleSmartRoute = (route: typeof SMART_ROUTES[0]) => {
+    setDistance(route.distance.toString());
+    setMode(route.mode);
+    setDistanceAuto(true);
+    setMapRoute(`${route.from} → ${route.to}`);
+    setStartLocationId('');
+    setEndLocationId('');
+    setShowSmartRoutes(false);
+    speak(`Smart route selected: ${route.label}, ${route.distance} kilometres`);
   };
 
   // Group locations by category
@@ -157,14 +172,49 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
       >
         {/* Route section with location dropdowns */}
         <div className="p-5 border-b border-gray-100">
-          {/* Select on Map button */}
-          <button
-            onClick={() => setShowMap(true)}
-            className="w-full mb-3 py-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl text-sm font-medium text-blue-700 transition-all flex items-center justify-center gap-2"
-          >
-            <Map className="w-4 h-4" />
-            Select on Map
-          </button>
+          {/* Map + Smart Routes buttons */}
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => { setShowMap(true); speak('Opening map picker'); }}
+              className="flex-1 py-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl text-sm font-medium text-blue-700 transition-all flex items-center justify-center gap-2"
+            >
+              <Map className="w-4 h-4" />
+              {t('btn.map', language)}
+            </button>
+            <div className="relative flex-1">
+              <button
+                onClick={() => setShowSmartRoutes(!showSmartRoutes)}
+                className="w-full py-2.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl text-sm font-medium text-purple-700 transition-all flex items-center justify-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                {t('btn.smartRoutes', language)}
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showSmartRoutes ? 'rotate-180' : ''}`} />
+              </button>
+              {showSmartRoutes && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700 rounded-xl shadow-xl z-20 max-h-60 overflow-y-auto">
+                  {SMART_ROUTES.map((route, i) => {
+                    const modeInfo = TRANSPORT_MODES.find(m => m.key === route.mode);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => handleSmartRoute(route)}
+                        className="w-full px-3 py-2.5 text-left hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors border-b border-gray-50 dark:border-gray-700 last:border-0 flex items-center justify-between"
+                      >
+                        <div>
+                          <div className="text-xs font-medium text-gray-700 dark:text-gray-200">{route.label}</div>
+                          <div className="text-[10px] text-gray-400">{route.from} → {route.to}</div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm">{modeInfo?.icon}</span>
+                          <span className="text-[10px] font-semibold text-purple-600">{route.distance}km</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
 
           {mapRoute && (
             <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg mb-3 text-xs text-blue-700">
@@ -244,7 +294,7 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
         {/* Transport mode selector */}
         <div className="p-5 border-b border-gray-100">
           <label className="text-xs font-medium text-gray-500 mb-3 block">Transport Mode</label>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
             {TRANSPORT_MODES.map(m => (
               <button
                 key={m.key}

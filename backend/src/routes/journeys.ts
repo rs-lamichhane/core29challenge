@@ -3,7 +3,7 @@ import { query } from '../db';
 import { calculateJourney, getImpactEquivalents, getCalorieEquivalents, TransportMode } from '../utils/calculations';
 
 const router = Router();
-const VALID_MODES: TransportMode[] = ['walk', 'cycle', 'e-scooter', 'bus', 'train', 'drive'];
+const VALID_MODES: TransportMode[] = ['walk', 'cycle', 'e-scooter', 'bus', 'train', 'drive', 'boat', 'plane'];
 
 // POST /api/journeys - log a journey
 router.post('/journeys', async (req: Request, res: Response) => {

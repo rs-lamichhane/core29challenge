@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS journeys (
   start_location_id INTEGER REFERENCES locations(id),
   end_location_id INTEGER REFERENCES locations(id),
   distance_km NUMERIC(8,2) NOT NULL CHECK (distance_km > 0),
-  mode VARCHAR(20) NOT NULL CHECK (mode IN ('walk','cycle','e-scooter','bus','train','drive')),
+  mode VARCHAR(20) NOT NULL CHECK (mode IN ('walk','cycle','e-scooter','bus','train','drive','boat','plane')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
