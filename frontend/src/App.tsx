@@ -6,7 +6,8 @@ function App() {
   const [impact, setImpact] = useState<any>(null)
 
   const calc = async (mode: string) => {
-    const res = await fetch('http://localhost:3000/api/journeys', {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const res = await fetch(`${apiUrl}/api/journeys`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ distanceKm: dist, mode })
