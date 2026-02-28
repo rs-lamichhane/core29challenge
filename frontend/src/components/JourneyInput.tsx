@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, ArrowRight, Sparkles, Navigation } from 'lucide-react';
+import { MapPin, ArrowRight, Sparkles, Navigation, Map } from 'lucide-react';
 import { api } from '../utils/api';
 import { TRANSPORT_MODES, DEMO_QUICK_FILLS } from '../utils/constants';
+
+const MapPicker = lazy(() => import('./MapPicker'));
 
 interface Props {
   userId: number;
@@ -24,6 +26,8 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showMap, setShowMap] = useState(false);
+  const [mapRoute, setMapRoute] = useState<string | null>(null);
 
   // Locations
   const [locations, setLocations] = useState<Location[]>([]);
@@ -96,6 +100,16 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
     setDistance(qf.distance.toString());
     setMode(qf.mode);
     setDistanceAuto(false);
+    setMapRoute(null);
+  };
+
+  const handleMapConfirm = (start: { lat: number; lng: number }, end: { lat: number; lng: number }, distanceKm: number) => {
+    setDistance(distanceKm.toString());
+    setDistanceAuto(true);
+    setMapRoute(`Map route (${distanceKm} km)`);
+    setStartLocationId('');
+    setEndLocationId('');
+    setShowMap(false);
   };
 
   // Group locations by category
@@ -143,6 +157,22 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
       >
         {/* Route section with location dropdowns */}
         <div className="p-5 border-b border-gray-100">
+          {/* Select on Map button */}
+          <button
+            onClick={() => setShowMap(true)}
+            className="w-full mb-3 py-2.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl text-sm font-medium text-blue-700 transition-all flex items-center justify-center gap-2"
+          >
+            <Map className="w-4 h-4" />
+            Select on Map
+          </button>
+
+          {mapRoute && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg mb-3 text-xs text-blue-700">
+              <Map className="w-3.5 h-3.5" />
+              {mapRoute} — selected via map
+            </div>
+          )}
+
           <div className="flex items-center gap-3 mb-3">
             <div className="flex flex-col items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-brand-400 ring-2 ring-brand-100"></div>
@@ -258,6 +288,13 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
           </button>
         </div>
       </motion.div>
+
+      {/* Map picker modal */}
+      {showMap && (
+        <Suspense fallback={<div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"><div className="w-8 h-8 border-3 border-brand-400 border-t-transparent rounded-full animate-spin" /></div>}>
+          <MapPicker onConfirm={handleMapConfirm} onClose={() => setShowMap(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import JourneyInput from './components/JourneyInput';
 import ResultsComparison from './components/ResultsComparison';
 import Dashboard from './components/Dashboard';
 import AchievementToast from './components/AchievementToast';
+import ChatBot from './components/ChatBot';
 
 type View = 'input' | 'results' | 'dashboard';
 
@@ -139,6 +140,9 @@ export default function App() {
           onDismiss={() => setToastAchievements([])}
         />
       )}
+
+      {/* AI Chatbot - right side panel */}
+      <ChatBot />
     </div>
   );
 }
