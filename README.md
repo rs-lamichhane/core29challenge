@@ -20,7 +20,7 @@ Access at `http://localhost:80`.
 - `/backend`: Node + TS + Express
 - `/db`: PostgreSQL Schema
 
-## 🧠 Hackathon Roadmap Ideas (Perplexity-Inspired)
+## 🧠 Hackathon Roadmap Ideas 
 
 These ideas are aimed at maximizing demo impact for judges while fitting a short hackathon window.
 
