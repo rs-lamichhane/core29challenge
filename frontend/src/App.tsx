@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from './utils/api';
 import { SettingsProvider, useSettings } from './utils/SettingsContext';
 import { notifyAchievement, notifyStreak, notifyWeeklyGoal } from './utils/notifications';
+import { AppNotification } from './components/NotificationBell';
 import AuthPage from './components/AuthPage';
 import Header from './components/Header';
 import JourneyInput from './components/JourneyInput';
@@ -11,7 +12,6 @@ import AchievementToast from './components/AchievementToast';
 import ChatBot from './components/ChatBot';
 import SettingsPanel from './components/SettingsPanel';
 import DynamicBackground from './components/DynamicBackground';
-import LanguageBar from './components/LanguageBar';
 import FriendBattle from './components/FriendBattle';
 
 type View = 'input' | 'results' | 'dashboard';
@@ -30,6 +30,18 @@ function AppInner() {
   const [lastResult, setLastResult] = useState<any>(null);
   const [summary, setSummary] = useState<any>(null);
   const [toastAchievements, setToastAchievements] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const notifIdRef = useRef(0);
+
+  const addNotification = useCallback((type: AppNotification['type'], title: string, message: string) => {
+    notifIdRef.current++;
+    setNotifications(prev => [{
+      id: `notif-${notifIdRef.current}-${Date.now()}`,
+      type, title, message,
+      timestamp: new Date(),
+      read: false,
+    }, ...prev].slice(0, 50)); // keep max 50
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem('GreenApp_user');
@@ -54,15 +66,21 @@ function AppInner() {
       setTotalCo2Saved(s.total_co2_saved_g || 0);
       // Notify on streak milestones
       const streak = s.streak?.current_streak || 0;
-      if ([3, 7, 14, 30].includes(streak)) notifyStreak(streak);
+      if ([3, 7, 14, 30].includes(streak)) {
+        notifyStreak(streak);
+        addNotification('streak', `⚡ ${streak}-Day Streak!`, `You've commuted sustainably for ${streak} days in a row!`);
+      }
       // Notify on weekly goal progress
       const wg = s.weekly_goal;
       if (wg) {
         const pct = (wg.progress_g / wg.target_g) * 100;
-        if (pct >= 75) notifyWeeklyGoal(pct);
+        if (pct >= 75) {
+          notifyWeeklyGoal(pct);
+          addNotification('goal', pct >= 100 ? '🎉 Weekly Goal Achieved!' : '📈 Almost There!', `You're ${pct.toFixed(0)}% of the way to your weekly CO₂ goal!`);
+        }
       }
     } catch { }
-  }, [user, setTotalCo2Saved]);
+  }, [user, setTotalCo2Saved, addNotification]);
 
   useEffect(() => {
     if (user) refreshSummary();
@@ -101,9 +119,9 @@ function AppInner() {
     if (result.new_achievements?.length > 0) {
       setToastAchievements(result.new_achievements);
       setTimeout(() => setToastAchievements([]), 5000);
-      // Push notifications for achievements
       result.new_achievements.forEach((a: any) => {
         notifyAchievement(a.title, a.description);
+        addNotification('achievement', `🏆 ${a.title}`, a.description);
       });
     }
     await refreshSummary();
@@ -123,7 +141,6 @@ function AppInner() {
   return (
     <div className="min-h-screen relative overflow-x-hidden">
       <DynamicBackground />
-      <LanguageBar />
       <Header
         view={view}
         onNavigate={handleNavigate}
@@ -132,6 +149,10 @@ function AppInner() {
         summary={summary}
         userName={user.name}
         onLogout={handleLogout}
+        notifications={notifications}
+        onDismissNotification={(id) => setNotifications(prev => prev.filter(n => n.id !== id))}
+        onClearNotifications={() => setNotifications([])}
+        onMarkNotificationsRead={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
       />
 
       <main className="max-w-4xl mx-auto px-3 sm:px-4 pb-8 overflow-hidden">

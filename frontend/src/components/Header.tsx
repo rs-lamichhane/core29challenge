@@ -1,4 +1,5 @@
 import { Leaf, BarChart3, PlusCircle, Flame, Zap, LogOut } from 'lucide-react';
+import NotificationBell, { AppNotification } from './NotificationBell';
 
 interface HeaderProps {
   view: string;
@@ -8,9 +9,13 @@ interface HeaderProps {
   summary: any;
   userName?: string;
   onLogout?: () => void;
+  notifications: AppNotification[];
+  onDismissNotification: (id: string) => void;
+  onClearNotifications: () => void;
+  onMarkNotificationsRead: () => void;
 }
 
-export default function Header({ view, onNavigate, demoMode, onToggleDemo, summary, userName, onLogout }: HeaderProps) {
+export default function Header({ view, onNavigate, demoMode, onToggleDemo, summary, userName, onLogout, notifications, onDismissNotification, onClearNotifications, onMarkNotificationsRead }: HeaderProps) {
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-brand-100 sticky top-0 z-50">
       <div className="max-w-4xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3">
@@ -48,6 +53,13 @@ export default function Header({ view, onNavigate, demoMode, onToggleDemo, summa
           )}
 
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            <NotificationBell
+              notifications={notifications}
+              onDismiss={onDismissNotification}
+              onClearAll={onClearNotifications}
+              onMarkRead={onMarkNotificationsRead}
+            />
+
             {userName && (
               <span className="hidden sm:block text-xs text-gray-500">
                 Hi, <span className="font-medium text-gray-700">{userName}</span>
