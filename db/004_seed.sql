@@ -1,17 +1,36 @@
--- Seed demo users
-INSERT INTO users (id, name, avatar_color) VALUES
-  (1,  'You',            '#10B981'),
-  (2,  'Emma Green',     '#3B82F6'),
-  (3,  'Liam Walker',    '#F59E0B'),
-  (4,  'Sophia Pedal',   '#EF4444'),
-  (5,  'Noah Tracks',    '#8B5CF6'),
-  (6,  'Olivia Runner',  '#EC4899'),
-  (7,  'James Cycle',    '#14B8A6'),
-  (8,  'Mia Transit',    '#F97316'),
-  (9,  'Ethan Swift',    '#6366F1'),
-  (10, 'Ava Stride',     '#06B6D4'),
-  (11, 'Ben Eco',        '#84CC16'),
-  (12, 'Chloe Miles',    '#D946EF')
+-- Seed accounts for demo users (password = "password" for all)
+-- SHA-256 hash of "password" = 5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8
+INSERT INTO accounts (id, email, password_hash) VALUES
+  (1,  'demo@greenapp.uk',            '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+  (2,  'emmagreen@gmail.com',         '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+  (3,  'liamwalker@gmail.com',        '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+  (4,  'sophiapedal@gmail.com',       '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+  (5,  'noahtracks@gmail.com',        '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+  (6,  'oliviarunner@gmail.com',      '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+  (7,  'jamescycle@gmail.com',        '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+  (8,  'miatransit@gmail.com',        '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+  (9,  'ethanswift@gmail.com',        '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+  (10, 'avastride@gmail.com',         '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+  (11, 'beneco@gmail.com',            '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'),
+  (12, 'chloemiles@gmail.com',        '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8')
+ON CONFLICT DO NOTHING;
+
+SELECT setval('accounts_id_seq', 12);
+
+-- Seed demo users (linked to accounts)
+INSERT INTO users (id, account_id, name, avatar_color) VALUES
+  (1,  1,  'You',            '#10B981'),
+  (2,  2,  'Emma Green',     '#3B82F6'),
+  (3,  3,  'Liam Walker',    '#F59E0B'),
+  (4,  4,  'Sophia Pedal',   '#EF4444'),
+  (5,  5,  'Noah Tracks',    '#8B5CF6'),
+  (6,  6,  'Olivia Runner',  '#EC4899'),
+  (7,  7,  'James Cycle',    '#14B8A6'),
+  (8,  8,  'Mia Transit',    '#F97316'),
+  (9,  9,  'Ethan Swift',    '#6366F1'),
+  (10, 10, 'Ava Stride',     '#06B6D4'),
+  (11, 11, 'Ben Eco',        '#84CC16'),
+  (12, 12, 'Chloe Miles',    '#D946EF')
 ON CONFLICT DO NOTHING;
 
 SELECT setval('users_id_seq', 12);

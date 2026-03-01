@@ -121,7 +121,7 @@ function AppInner() {
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative overflow-x-hidden">
       <DynamicBackground />
       <LanguageBar />
       <Header
@@ -134,7 +134,7 @@ function AppInner() {
         onLogout={handleLogout}
       />
 
-      <main className="max-w-4xl mx-auto px-4 pb-8">
+      <main className="max-w-4xl mx-auto px-3 sm:px-4 pb-8 overflow-hidden">
         {/* Friend Battle button bar */}
         <div className="flex items-center justify-end gap-2 mt-3 mb-1">
           <FriendBattle userId={userId} userName={user.name} />

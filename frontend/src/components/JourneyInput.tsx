@@ -157,7 +157,7 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
   return (
     <div className="mt-6 animate-fade-in-up">
       {/* Hero */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-4 sm:mb-6 px-1">
         <h2 className="text-xl sm:text-3xl font-extrabold text-gray-800">
           How did you <span className="text-brand-500">commute</span> today?
         </h2>
@@ -194,7 +194,7 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
         className="bg-white rounded-2xl shadow-lg shadow-brand-100/50 border border-brand-100 overflow-hidden"
       >
         {/* Route section with location dropdowns */}
-        <div className="p-5 border-b border-gray-100">
+        <div className="p-4 sm:p-5 border-b border-gray-100">
           {/* Map + Smart Routes buttons */}
           <div className="flex gap-2 mb-3">
             <button
@@ -315,7 +315,7 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
         </div>
 
         {/* Transport mode selector */}
-        <div className="p-5 border-b border-gray-100">
+        <div className="p-4 sm:p-5 border-b border-gray-100">
           <label className="text-xs font-medium text-gray-500 mb-3 block">Transport Mode</label>
           <div className={`grid gap-2 ${availableModes.length <= 6 ? 'grid-cols-3 sm:grid-cols-6' : 'grid-cols-3 sm:grid-cols-4 md:grid-cols-8'}`}>
             {availableModes.map(m => (
@@ -323,8 +323,8 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
                 key={m.key}
                 onClick={() => setMode(m.key)}
                 className={`flex flex-col items-center gap-0.5 sm:gap-1 p-2.5 sm:p-3 rounded-xl border-2 transition-all ${mode === m.key
-                    ? 'border-brand-400 bg-brand-50 shadow-md shadow-brand-100'
-                    : 'border-gray-100 bg-gray-50 hover:border-gray-200'
+                  ? 'border-brand-400 bg-brand-50 shadow-md shadow-brand-100'
+                  : 'border-gray-100 bg-gray-50 hover:border-gray-200'
                   }`}
               >
                 <span className="text-xl sm:text-2xl">{m.icon}</span>
@@ -337,7 +337,7 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
         </div>
 
         {/* Submit */}
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           {error && (
             <div className="mb-3 px-3 py-2 bg-red-50 text-red-600 text-xs rounded-lg">
               {error}
