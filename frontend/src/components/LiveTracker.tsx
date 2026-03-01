@@ -14,7 +14,7 @@ interface Props {
         mode: string;
         start_name: string;
         end_name: string;
-    }) => void;
+    }) => Promise<void>;
     onCancel: () => void;
 }
 
@@ -118,9 +118,26 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
         );
     }, []);
 
-    // Request on mount
+    // Request on mount - REMOVED to avoid browser blocking without user gesture
     useEffect(() => {
-        requestLocation();
+        // We only check for permission status on mount, not request location
+        if ('permissions' in navigator) {
+            navigator.permissions.query({ name: 'geolocation' as PermissionName }).then(result => {
+                if (result.state === 'granted') {
+                    requestLocation();
+                } else if (result.state === 'prompt') {
+                    setLocating(false);
+                } else {
+                    setLocating(false);
+                    setError('Location permission is denied in browser settings.');
+                }
+            }).catch(() => {
+                setLocating(false);
+            });
+        } else {
+            setLocating(false);
+        }
+
         return () => {
             if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
             if (timerRef.current) clearInterval(timerRef.current);
@@ -129,8 +146,15 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
 
     const startTracking = useCallback(() => {
         if (!mode) return;
+
+        // If we don't have a position yet, try to get it (user gesture)
+        if (!position) {
+            requestLocation();
+            return;
+        }
+
         setTracking(true);
-        setTrail(position ? [position] : []);
+        setTrail([position]);
         setDistance(0);
         setElapsedSec(0);
         startTimeRef.current = Date.now();
@@ -166,33 +190,49 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
     }, [mode, position]);
 
     const stopTracking = useCallback(async () => {
+        if (distance < 0.01) {
+            setError('Journey too short to save (min 10m required).');
+            return;
+        }
+
         setStopping(true);
+        setError('');
 
-        // Stop GPS and timer
-        if (watchIdRef.current !== null) {
-            navigator.geolocation.clearWatch(watchIdRef.current);
-            watchIdRef.current = null;
-        }
-        if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-        }
+        try {
+            // Reverse geocode start and end
+            let startName = 'Start';
+            let endName = 'End';
+            if (trail.length > 0) {
+                try {
+                    startName = await reverseGeocode(trail[0].lat, trail[0].lng);
+                    const last = trail[trail.length - 1];
+                    endName = await reverseGeocode(last.lat, last.lng);
+                } catch (e) {
+                    console.error('Geocoding failed', e);
+                }
+            }
 
-        // Reverse geocode start and end
-        let startName = 'Start';
-        let endName = 'End';
-        if (trail.length > 0) {
-            startName = await reverseGeocode(trail[0].lat, trail[0].lng);
-            const last = trail[trail.length - 1];
-            endName = await reverseGeocode(last.lat, last.lng);
-        }
+            // Call parent save
+            await onJourneyComplete({
+                distance_km: Math.round(distance * 100) / 100,
+                mode: mode!,
+                start_name: startName,
+                end_name: endName,
+            });
 
-        onJourneyComplete({
-            distance_km: Math.round(distance * 100) / 100,
-            mode: mode!,
-            start_name: startName,
-            end_name: endName,
-        });
+            // If successful, stop GPS and timer
+            if (watchIdRef.current !== null) {
+                navigator.geolocation.clearWatch(watchIdRef.current);
+                watchIdRef.current = null;
+            }
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to save journey. Please check connection.');
+            setStopping(false);
+        }
     }, [trail, distance, mode, onJourneyComplete]);
 
     const formatTime = (sec: number) => {
@@ -262,7 +302,7 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
 
     // Phase 2: Mode selected, ready to start
     if (!tracking && mode) {
-        const modeInfo = TRANSPORT_MODES.find(m => m.key === mode)!;
+        const modeInfo = TRANSPORT_MODES.find(m => m.key === mode) || TRANSPORT_MODES[0];
         return (
             <div className="animate-fade-in-up">
                 <div className="text-center mb-4">
@@ -273,42 +313,55 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
 
                 <div className="bg-white rounded-2xl shadow-lg border border-brand-100 overflow-hidden">
                     {/* Map preview */}
-                    {position && (
-                        <div className="h-48 relative">
+                    <div className="h-48 bg-gray-100 relative">
+                        {position ? (
                             <MapContainer
                                 center={[position.lat, position.lng]}
                                 zoom={15}
                                 style={{ height: '100%', width: '100%' }}
                                 zoomControl={false}
-                                attributionControl={false}
+                                dragging={false}
+                                touchZoom={false}
+                                scrollWheelZoom={false}
                             >
                                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                <CircleMarker
-                                    center={[position.lat, position.lng]}
-                                    radius={8}
-                                    pathOptions={{ color: '#10B981', fillColor: '#10B981', fillOpacity: 0.8, weight: 3 }}
-                                />
+                                <CircleMarker center={[position.lat, position.lng]} radius={8} fillOpacity={1} color="white" fillColor="#10B981" weight={3} />
+                                <MapFollower position={position} />
                             </MapContainer>
-                            <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-[10px] text-gray-500 z-[500]">
-                                📍 Your location
+                        ) : (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+                                <Navigation className="w-8 h-8 text-gray-300 mb-2 animate-pulse" />
+                                <p className="text-xs text-gray-400">Waiting for GPS signal...</p>
+                                {!locating && (
+                                    <button
+                                        onClick={requestLocation}
+                                        className="mt-3 px-4 py-1.5 bg-brand-500 text-white text-xs font-semibold rounded-full shadow-md"
+                                    >
+                                        Enable Location
+                                    </button>
+                                )}
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
-                    <div className="p-5 space-y-3">
+                    <div className="p-4 flex gap-3">
                         <button
-                            onClick={startTracking}
-                            disabled={!position}
-                            className="w-full flex items-center justify-center gap-2 py-3 bg-brand-500 hover:bg-brand-600 disabled:bg-gray-300 text-white font-bold rounded-xl transition-colors shadow-lg shadow-brand-200"
+                            onClick={() => {
+                                setMode(null);
+                                setError('');
+                            }}
+                            className="flex-1 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 font-bold rounded-xl transition-colors border border-gray-100"
                         >
-                            <Play className="w-5 h-5" fill="white" />
-                            Start Tracking
+                            Change Mode
                         </button>
                         <button
-                            onClick={() => setMode(null)}
-                            className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                            onClick={startTracking}
+                            disabled={!position || locating}
+                            className={`flex-[2] py-3 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 ${!position || locating ? 'bg-gray-300 cursor-not-allowed shadow-none' : 'bg-brand-500 hover:bg-brand-600'
+                                }`}
                         >
-                            ← Change transport mode
+                            <Play className="w-5 h-5 fill-current" />
+                            Start Tracking
                         </button>
                     </div>
                 </div>
@@ -316,7 +369,10 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
                 {error && (
                     <div className="mt-3 px-3 py-3 bg-red-50 rounded-lg">
                         <p className="text-red-600 text-xs">{error}</p>
-                        <button onClick={requestLocation} className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-medium rounded-lg transition-colors">
+                        <button
+                            onClick={requestLocation}
+                            className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-medium rounded-lg transition-colors"
+                        >
                             <RefreshCw className="w-3 h-3" /> Retry Location
                         </button>
                     </div>
@@ -326,7 +382,7 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
     }
 
     // Phase 3: Actively tracking
-    const modeInfo = TRANSPORT_MODES.find(m => m.key === mode)!;
+    const activeModeInfo = TRANSPORT_MODES.find(m => m.key === mode) || TRANSPORT_MODES[0];
     return (
         <div className="animate-fade-in-up">
             <div className="bg-white rounded-2xl shadow-lg border border-brand-100 overflow-hidden">
@@ -379,7 +435,7 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
 
                     {/* Mode badge */}
                     <div className="absolute top-3 right-3 z-[500] bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-sm">
-                        {modeInfo.icon} {modeInfo.label}
+                        {activeModeInfo.icon} {activeModeInfo.label}
                     </div>
                 </div>
 
@@ -409,23 +465,31 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
                         <div className={`text-lg font-bold ${co2Saved > 0 ? 'text-brand-600' : 'text-gray-800'}`}>
                             {co2Saved > 0 ? `+${(co2Saved / 1000).toFixed(1)}` : '0.0'}
                         </div>
-                        <div className="text-[10px] text-gray-400">kg vs driving</div>
+                        <div className="text-[10px] text-gray-400">kg</div>
                     </div>
                 </div>
 
-                {/* Stop button */}
-                <div className="p-4 border-t border-gray-100">
+                <div className="p-5 bg-gray-50 border-t border-gray-100">
                     <button
                         onClick={stopTracking}
-                        disabled={stopping || distance < 0.01}
-                        className="w-full flex items-center justify-center gap-2 py-3.5 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white font-bold rounded-xl transition-colors shadow-lg shadow-red-200"
+                        disabled={stopping}
+                        className="w-full py-4 bg-gray-800 hover:bg-gray-900 text-white font-bold rounded-2xl shadow-xl transition-all flex items-center justify-center gap-3 disabled:bg-gray-400"
                     >
-                        <Square className="w-5 h-5" fill="white" />
-                        {stopping ? 'Saving Journey...' : 'Stop & Save Journey'}
+                        {stopping ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Saving your journey...
+                            </>
+                        ) : (
+                            <>
+                                <Square className="w-5 h-5 fill-current" />
+                                Stop & Save Journey
+                            </>
+                        )}
                     </button>
-                    {distance < 0.01 && (
-                        <p className="text-center text-[10px] text-gray-400 mt-2">Start moving to enable saving</p>
-                    )}
+                    <p className="mt-3 text-center text-xs text-gray-400">
+                        Stay on this screen until you finish your travel
+                    </p>
                 </div>
             </div>
 

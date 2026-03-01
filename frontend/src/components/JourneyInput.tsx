@@ -210,8 +210,11 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
                   mode: data.mode,
                 });
                 onJourneyLogged(result);
+                return Promise.resolve();
               } catch (err: any) {
-                setError(err.message || 'Failed to log journey');
+                const msg = err.message || 'Failed to log journey';
+                setError(msg);
+                throw new Error(msg); // Re-throw so LiveTracker can catch it
               }
             }}
             onCancel={() => setTrackingMode('manual')}
