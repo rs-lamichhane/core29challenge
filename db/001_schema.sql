@@ -83,8 +83,36 @@ CREATE TABLE IF NOT EXISTS weekly_goals (
   UNIQUE(user_id, week_start)
 );
 
+-- Friend battles
+CREATE TABLE IF NOT EXISTS friend_battles (
+  id SERIAL PRIMARY KEY,
+  challenger_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  opponent_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','active','completed','declined')),
+  start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  end_date DATE NOT NULL DEFAULT (CURRENT_DATE + INTERVAL '7 days'),
+  challenger_co2_saved NUMERIC(10,2) DEFAULT 0,
+  opponent_co2_saved NUMERIC(10,2) DEFAULT 0,
+  winner_id INTEGER REFERENCES users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Push notification subscriptions
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  endpoint TEXT NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, endpoint)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_journeys_user_id ON journeys(user_id);
 CREATE INDEX IF NOT EXISTS idx_journeys_date ON journeys(date);
 CREATE INDEX IF NOT EXISTS idx_journey_results_journey_id ON journey_results(journey_id);
 CREATE INDEX IF NOT EXISTS idx_user_achievements_user ON user_achievements(user_id);
+CREATE INDEX IF NOT EXISTS idx_friend_battles_challenger ON friend_battles(challenger_id);
+CREATE INDEX IF NOT EXISTS idx_friend_battles_opponent ON friend_battles(opponent_id);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id);

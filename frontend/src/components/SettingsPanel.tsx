@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, X, Moon, Sun, Eye, Volume2, VolumeX, Globe } from 'lucide-react';
+import { Settings, X, Moon, Sun, Eye, Volume2, VolumeX, Globe, Bell, BellOff } from 'lucide-react';
 import { useSettings, ColorBlindMode } from '../utils/SettingsContext';
 import { LANGUAGES } from '../utils/constants';
+import { isNotificationSupported, requestNotificationPermission, getNotificationPermission } from '../utils/notifications';
 
 export default function SettingsPanel() {
   const [isOpen, setIsOpen] = useState(false);
+  const [notifPermission, setNotifPermission] = useState<string>('default');
   const {
     darkMode, setDarkMode,
     colorBlindMode, setColorBlindMode,
@@ -13,6 +15,21 @@ export default function SettingsPanel() {
     language, setLanguage,
     speak,
   } = useSettings();
+
+  useEffect(() => {
+    setNotifPermission(getNotificationPermission());
+  }, []);
+
+  const handleNotifToggle = async () => {
+    if (notifPermission === 'granted') {
+      // Can't revoke — show info
+      speak('Notifications are enabled. To disable, update your browser settings.');
+      return;
+    }
+    const granted = await requestNotificationPermission();
+    setNotifPermission(granted ? 'granted' : 'denied');
+    if (granted) speak('Push notifications enabled');
+  };
 
   const colorBlindOptions: { key: ColorBlindMode; label: string; desc: string }[] = [
     { key: 'none', label: 'Normal', desc: 'Default colours' },
@@ -101,37 +118,62 @@ export default function SettingsPanel() {
                 </div>
               </div>
 
-              {/* Menu Narration */}
+              {/* Accessibility section: Narration + Notifications */}
               <div>
                 <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-3">Accessibility</h4>
-                <button
-                  onClick={() => {
-                    const newVal = !narration;
-                    setNarration(newVal);
-                    if (newVal) {
-                      // Speak after enabling
-                      setTimeout(() => {
-                        if ('speechSynthesis' in window) {
-                          const u = new SpeechSynthesisUtterance('Screen narration enabled');
-                          u.rate = 0.95;
-                          window.speechSynthesis.speak(u);
-                        }
-                      }, 100);
-                    }
-                  }}
-                  className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    {narration ? <Volume2 className="w-5 h-5 text-brand-500" /> : <VolumeX className="w-5 h-5 text-gray-400" />}
-                    <div className="text-left">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Menu Narration</span>
-                      <p className="text-[10px] text-gray-400">Reads menu items and actions aloud</p>
+                <div className="space-y-2">
+                  {/* Menu Narration */}
+                  <button
+                    onClick={() => {
+                      const newVal = !narration;
+                      setNarration(newVal);
+                      if (newVal) {
+                        setTimeout(() => {
+                          if ('speechSynthesis' in window) {
+                            const u = new SpeechSynthesisUtterance('Screen narration enabled');
+                            u.rate = 0.95;
+                            window.speechSynthesis.speak(u);
+                          }
+                        }, 100);
+                      }
+                    }}
+                    className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      {narration ? <Volume2 className="w-5 h-5 text-brand-500" /> : <VolumeX className="w-5 h-5 text-gray-400" />}
+                      <div className="text-left">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Menu Narration</span>
+                        <p className="text-[10px] text-gray-400">Reads menu items and actions aloud</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className={`w-10 h-6 rounded-full transition-colors ${narration ? 'bg-brand-500' : 'bg-gray-300'}`}>
-                    <div className={`w-5 h-5 bg-white rounded-full shadow-sm mt-0.5 transition-transform ${narration ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
-                  </div>
-                </button>
+                    <div className={`w-10 h-6 rounded-full transition-colors ${narration ? 'bg-brand-500' : 'bg-gray-300'}`}>
+                      <div className={`w-5 h-5 bg-white rounded-full shadow-sm mt-0.5 transition-transform ${narration ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
+                    </div>
+                  </button>
+
+                  {/* Push Notifications */}
+                  {isNotificationSupported() && (
+                    <button
+                      onClick={handleNotifToggle}
+                      className="w-full flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        {notifPermission === 'granted' ? <Bell className="w-5 h-5 text-orange-500" /> : <BellOff className="w-5 h-5 text-gray-400" />}
+                        <div className="text-left">
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Push Notifications</span>
+                          <p className="text-[10px] text-gray-400">
+                            {notifPermission === 'granted' ? 'Enabled — achievements, streaks, battles' :
+                             notifPermission === 'denied' ? 'Blocked — update browser settings' :
+                             'Get notified for achievements & battles'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className={`w-10 h-6 rounded-full transition-colors ${notifPermission === 'granted' ? 'bg-orange-500' : 'bg-gray-300'}`}>
+                        <div className={`w-5 h-5 bg-white rounded-full shadow-sm mt-0.5 transition-transform ${notifPermission === 'granted' ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
+                      </div>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Language */}
