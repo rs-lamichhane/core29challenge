@@ -54,7 +54,7 @@ export default function AuthPage({ onLogin, onDemoLogin }: Props) {
           <div className="w-16 h-16 bg-brand-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-200">
             <Leaf className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-extrabold text-gray-800">GreenRoute</h1>
+          <h1 className="text-3xl font-extrabold text-gray-800">GreenApp</h1>
           <p className="text-gray-500 mt-1">Track your sustainable commute</p>
           <p className="text-xs text-brand-600 mt-0.5">Core29 Sustainability Challenge</p>
         </div>
@@ -65,21 +65,19 @@ export default function AuthPage({ onLogin, onDemoLogin }: Props) {
           <div className="flex border-b border-gray-100">
             <button
               onClick={() => { setIsRegister(false); setError(''); }}
-              className={`flex-1 py-3.5 text-sm font-semibold transition-all ${
-                !isRegister
+              className={`flex-1 py-3.5 text-sm font-semibold transition-all ${!isRegister
                   ? 'text-brand-600 border-b-2 border-brand-500 bg-brand-50/50'
                   : 'text-gray-400 hover:text-gray-600'
-              }`}
+                }`}
             >
               Sign In
             </button>
             <button
               onClick={() => { setIsRegister(true); setError(''); }}
-              className={`flex-1 py-3.5 text-sm font-semibold transition-all ${
-                isRegister
+              className={`flex-1 py-3.5 text-sm font-semibold transition-all ${isRegister
                   ? 'text-brand-600 border-b-2 border-brand-500 bg-brand-50/50'
                   : 'text-gray-400 hover:text-gray-600'
-              }`}
+                }`}
             >
               Register
             </button>

@@ -18,5 +18,36 @@ services:
       timeout: 3s
       retries: 5
 
+  backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://core29:core29pass@postgres:5432/sustainability
+      - PORT=3001
+      - NODE_ENV=production
+    volumes:
+      - ./db:/db
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --config /home/nonroot/.cloudflared/config.yml run
+    volumes:
+      - ./cloudflared:/home/nonroot/.cloudflared
+    restart: always
+    depends_on:
+      - frontend
+      - backend
+
 volumes:
   pgdata:

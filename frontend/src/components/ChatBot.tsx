@@ -62,7 +62,7 @@ function getBotResponse(input: string): string {
 
   // Carbon footprint
   if (q.includes('carbon footprint') || q.includes('footprint')) {
-    return "Your carbon footprint is the total amount of greenhouse gases you produce. The average UK person's footprint is about 10 tonnes of CO₂ per year, with transport making up roughly 2.7 tonnes of that. Your commute is one of the biggest controllable parts of your footprint. By tracking your journeys with GreenRoute and choosing greener options, you can directly measure and reduce your transport footprint. Even replacing 2-3 car trips per week with cycling can cut your transport emissions by 30-40%.";
+    return "Your carbon footprint is the total amount of greenhouse gases you produce. The average UK person's footprint is about 10 tonnes of CO₂ per year, with transport making up roughly 2.7 tonnes of that. Your commute is one of the biggest controllable parts of your footprint. By tracking your journeys with GreenApp and choosing greener options, you can directly measure and reduce your transport footprint. Even replacing 2-3 car trips per week with cycling can cut your transport emissions by 30-40%.";
   }
 
   // Trees and offsets
@@ -72,7 +72,7 @@ function getBotResponse(input: string): string {
 
   // Tips and advice
   if (q.includes('tip') || q.includes('advice') || q.includes('how can i') || q.includes('what can i do') || q.includes('reduce')) {
-    return "Here are some practical ways to reduce your commute emissions:\n\n1. **Start small**: Replace just 1-2 car trips per week with walking or cycling\n2. **Combine modes**: Cycle to the train station, then take the train\n3. **Plan ahead**: Use GreenRoute to see the impact before you choose\n4. **Try e-scooters**: Great for short trips where walking feels too far\n5. **Carpool**: If you must drive, share the ride and halve the emissions\n6. **Set goals**: Use the weekly goal feature to stay motivated\n7. **Build streaks**: Consecutive days of sustainable commuting builds habits\n\nRemember: the most sustainable journey is one that replaces a car trip. Even choosing the bus over driving makes a meaningful difference!";
+    return "Here are some practical ways to reduce your commute emissions:\n\n1. **Start small**: Replace just 1-2 car trips per week with walking or cycling\n2. **Combine modes**: Cycle to the train station, then take the train\n3. **Plan ahead**: Use GreenApp to see the impact before you choose\n4. **Try e-scooters**: Great for short trips where walking feels too far\n5. **Carpool**: If you must drive, share the ride and halve the emissions\n6. **Set goals**: Use the weekly goal feature to stay motivated\n7. **Build streaks**: Consecutive days of sustainable commuting builds habits\n\nRemember: the most sustainable journey is one that replaces a car trip. Even choosing the bus over driving makes a meaningful difference!";
   }
 
   // Health
@@ -82,12 +82,12 @@ function getBotResponse(input: string): string {
 
   // Aberdeen specific
   if (q.includes('aberdeen')) {
-    return "Aberdeen has some great sustainable commuting infrastructure. The Deeside Way provides a traffic-free cycling and walking route through the city. RGU's Garthdee campus is well-connected by bus routes (First Aberdeen) and has good cycling access from the city centre (about 4km). The new Aberdeen Rapid Transit proposals aim to improve public transport further. With Aberdeen's compact city centre, many journeys are under 5km — perfect for cycling or e-scooter trips. Check GreenRoute to see exactly how much CO₂ you'd save on your specific route!";
+    return "Aberdeen has some great sustainable commuting infrastructure. The Deeside Way provides a traffic-free cycling and walking route through the city. RGU's Garthdee campus is well-connected by bus routes (First Aberdeen) and has good cycling access from the city centre (about 4km). The new Aberdeen Rapid Transit proposals aim to improve public transport further. With Aberdeen's compact city centre, many journeys are under 5km — perfect for cycling or e-scooter trips. Check GreenApp to see exactly how much CO₂ you'd save on your specific route!";
   }
 
   // Equivalents
   if (q.includes('equivalent') || q.includes('phone charge') || q.includes('kettle') || q.includes('light bulb')) {
-    return "We use everyday equivalents to make CO₂ savings feel real:\n\n• **Phone charge**: ~8g CO₂ each\n• **Kettle boil**: ~70g CO₂ each\n• **LED bulb hour**: ~4g CO₂\n• **Tree-day**: A tree absorbs ~60g CO₂ per day\n• **km of driving avoided**: 170g CO₂ per km\n\nSo if you cycle 5km instead of driving, your 850g of CO₂ saved equals: 103 phone charges, 12 kettle boils, or 14 tree-days of absorption. These equivalents help make the invisible visible — which is exactly what GreenRoute is all about!";
+    return "We use everyday equivalents to make CO₂ savings feel real:\n\n• **Phone charge**: ~8g CO₂ each\n• **Kettle boil**: ~70g CO₂ each\n• **LED bulb hour**: ~4g CO₂\n• **Tree-day**: A tree absorbs ~60g CO₂ per day\n• **km of driving avoided**: 170g CO₂ per km\n\nSo if you cycle 5km instead of driving, your 850g of CO₂ saved equals: 103 phone charges, 12 kettle boils, or 14 tree-days of absorption. These equivalents help make the invisible visible — which is exactly what GreenApp is all about!";
   }
 
   // Greeting
@@ -97,7 +97,7 @@ function getBotResponse(input: string): string {
 
   // Thanks
   if (q.includes('thank') || q.includes('cheers') || q.includes('great')) {
-    return "You're welcome! Every sustainable journey counts. Keep tracking your commutes with GreenRoute — watching your CO₂ savings grow is incredibly motivating. Is there anything else you'd like to know about sustainable transport or climate impact?";
+    return "You're welcome! Every sustainable journey counts. Keep tracking your commutes with GreenApp — watching your CO₂ savings grow is incredibly motivating. Is there anything else you'd like to know about sustainable transport or climate impact?";
   }
 
   // Fallback
@@ -234,20 +234,18 @@ export default function ChatBot() {
                   className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
                 >
                   <div
-                    className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center ${
-                      msg.role === 'bot'
+                    className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center ${msg.role === 'bot'
                         ? 'bg-brand-100 text-brand-600'
                         : 'bg-blue-100 text-blue-600'
-                    }`}
+                      }`}
                   >
                     {msg.role === 'bot' ? <Bot className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
                   </div>
                   <div
-                    className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
-                      msg.role === 'bot'
+                    className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${msg.role === 'bot'
                         ? 'bg-gray-100 text-gray-800 rounded-tl-sm'
                         : 'bg-brand-500 text-white rounded-tr-sm'
-                    }`}
+                      }`}
                   >
                     {msg.text.split('\n').map((line, i) => (
                       <p key={i} className={i > 0 ? 'mt-1.5' : ''}>

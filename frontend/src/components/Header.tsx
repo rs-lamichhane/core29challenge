@@ -20,7 +20,7 @@ export default function Header({ view, onNavigate, demoMode, onToggleDemo, summa
               <Leaf className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-brand-800 leading-tight">GreenRoute</h1>
+              <h1 className="text-lg font-bold text-brand-800 leading-tight">GreenApp</h1>
               <p className="text-[10px] text-brand-600 -mt-0.5">Core29 Sustainability</p>
             </div>
           </div>
@@ -56,11 +56,10 @@ export default function Header({ view, onNavigate, demoMode, onToggleDemo, summa
 
             <button
               onClick={onToggleDemo}
-              className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${
-                demoMode
+              className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${demoMode
                   ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300'
                   : 'bg-gray-100 text-gray-500'
-              }`}
+                }`}
             >
               {demoMode ? '✨ Demo' : 'Demo'}
             </button>
@@ -100,11 +99,10 @@ function NavBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-        active
+      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${active
           ? 'bg-white text-brand-700 shadow-sm'
           : 'text-gray-500 hover:text-gray-700'
-      }`}
+        }`}
     >
       {icon}
       {label}

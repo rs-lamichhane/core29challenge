@@ -30,14 +30,14 @@ function AppInner() {
   const [toastAchievements, setToastAchievements] = useState<any[]>([]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('greenroute_user');
+    const saved = localStorage.getItem('GreenApp_user');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         setUser(parsed);
         setDemoMode(!parsed.email);
       } catch {
-        localStorage.removeItem('greenroute_user');
+        localStorage.removeItem('GreenApp_user');
       }
     }
   }, []);
@@ -50,7 +50,7 @@ function AppInner() {
       const s = await api.getUserSummary(user.id);
       setSummary(s);
       setTotalCo2Saved(s.total_co2_saved_g || 0);
-    } catch {}
+    } catch { }
   }, [user, setTotalCo2Saved]);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ function AppInner() {
   const handleLogin = (authUser: AuthUser) => {
     setUser(authUser);
     setDemoMode(false);
-    localStorage.setItem('greenroute_user', JSON.stringify(authUser));
+    localStorage.setItem('GreenApp_user', JSON.stringify(authUser));
   };
 
   const handleDemoLogin = async () => {
@@ -69,7 +69,7 @@ function AppInner() {
       const demoUser = { id: u.id, name: u.name };
       setUser(demoUser);
       setDemoMode(true);
-      localStorage.setItem('greenroute_user', JSON.stringify(demoUser));
+      localStorage.setItem('GreenApp_user', JSON.stringify(demoUser));
     } catch {
       setUser({ id: 1, name: 'You' });
       setDemoMode(true);
@@ -81,7 +81,7 @@ function AppInner() {
     setSummary(null);
     setLastResult(null);
     setView('input');
-    localStorage.removeItem('greenroute_user');
+    localStorage.removeItem('GreenApp_user');
   };
 
   const handleJourneyLogged = async (result: any) => {

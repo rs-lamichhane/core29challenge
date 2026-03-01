@@ -1,4 +1,4 @@
-# GreenRoute - Core29 Sustainability Challenge
+# GreenApp - Core29 Sustainability Challenge
 
 A demo-ready web app that makes sustainability **visible** for commuters by comparing transport choices against driving, with gamification features to encourage repeated sustainable behaviour.
 
