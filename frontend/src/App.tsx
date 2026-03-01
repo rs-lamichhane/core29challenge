@@ -86,6 +86,41 @@ function AppInner() {
     if (user) refreshSummary();
   }, [user, refreshSummary]);
 
+  // Poll for battle notifications — personalized from API data
+  const seenBattleIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user) return;
+    const pollBattles = async () => {
+      try {
+        const battles = await api.getBattles(user.id);
+        for (const b of battles) {
+          const key = `${b.id}-${b.status}`;
+          if (seenBattleIdsRef.current.has(key)) continue;
+          seenBattleIdsRef.current.add(key);
+
+          // Pending battle sent TO this user
+          if (b.status === 'pending' && b.opponent_id === user.id) {
+            addNotification('battle', `⚔️ Battle Challenge!`, `${b.challenger_name} has challenged you to a CO₂ saving battle!`);
+          }
+          // Battle accepted (notify the challenger)
+          if (b.status === 'active' && b.challenger_id === user.id) {
+            addNotification('battle', `✅ Challenge Accepted!`, `${b.opponent_name} accepted your battle challenge!`);
+          }
+          // Battle completed
+          if (b.status === 'completed' && b.winner_id) {
+            const won = b.winner_id === user.id;
+            addNotification('battle', won ? '🏆 Battle Won!' : '😅 Battle Lost',
+              won ? `You defeated ${b.winner_id === b.challenger_id ? b.opponent_name : b.challenger_name}!`
+                : `${b.winner_name} won the battle. Keep commuting sustainably!`);
+          }
+        }
+      } catch { }
+    };
+    pollBattles(); // initial check
+    const interval = setInterval(pollBattles, 30000); // every 30s
+    return () => clearInterval(interval);
+  }, [user, addNotification]);
+
   const handleLogin = (authUser: AuthUser) => {
     setUser(authUser);
     setDemoMode(false);
