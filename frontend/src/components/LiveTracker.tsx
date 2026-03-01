@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Polyline, CircleMarker, useMap } from 'react-leaflet';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Navigation, Square, Play, Clock, Route, Gauge } from 'lucide-react';
+import { Navigation, Square, Play, Clock, Route, Gauge, RefreshCw, Loader2 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 interface LatLng { lat: number; lng: number; }
@@ -70,67 +70,62 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
     const [elapsedSec, setElapsedSec] = useState(0);
     const [error, setError] = useState('');
     const [stopping, setStopping] = useState(false);
+    const [locating, setLocating] = useState(true);
 
     const watchIdRef = useRef<number | null>(null);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const startTimeRef = useRef<number>(0);
     const lastPosRef = useRef<LatLng | null>(null);
 
-    // Get initial position on mount - properly handle permissions
-    useEffect(() => {
+    // Retry-able location request — tries high accuracy, then falls back
+    const requestLocation = useCallback(() => {
         if (!('geolocation' in navigator)) {
             setError('Geolocation not supported by this browser.');
+            setLocating(false);
             return;
         }
+        setLocating(true);
+        setError('');
 
-        const requestLocation = () => {
+        const onSuccess = (pos: GeolocationPosition) => {
+            setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            setError('');
+            setLocating(false);
+        };
+
+        const tryLowAccuracy = () => {
             navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                    setError('');
-                },
+                onSuccess,
                 (err) => {
+                    setLocating(false);
                     if (err.code === 1) {
-                        setError('📍 Location permission denied. Please allow location access in your browser settings and reload the page.');
+                        setError('Location permission was denied.');
                     } else if (err.code === 2) {
-                        setError('📍 Location unavailable. Make sure GPS/Location is turned on in your device settings.');
+                        setError('Location not available. Please turn on GPS in device settings.');
                     } else {
-                        setError('📍 Location request timed out. Please check your GPS signal and try again.');
+                        setError('Location timed out. Check your GPS signal.');
                     }
                 },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
             );
         };
 
-        // Check permission state first (if supported)
-        if ('permissions' in navigator) {
-            navigator.permissions.query({ name: 'geolocation' }).then(result => {
-                if (result.state === 'denied') {
-                    setError('📍 Location access is blocked. To enable, go to your browser settings → Site Settings → Location, and allow access for this site.');
-                } else {
-                    // 'prompt' or 'granted' — call getCurrentPosition which will trigger the prompt if needed
-                    requestLocation();
-                }
-                // Watch for future changes
-                result.onchange = () => {
-                    if (result.state === 'granted') {
-                        setError('');
-                        requestLocation();
-                    }
-                };
-            }).catch(() => {
-                // permissions API not available, just try directly
-                requestLocation();
-            });
-        } else {
-            requestLocation();
-        }
+        // Try high accuracy first, fall back to low
+        navigator.geolocation.getCurrentPosition(
+            onSuccess,
+            () => tryLowAccuracy(), // silently fallback
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        );
+    }, []);
 
+    // Request on mount
+    useEffect(() => {
+        requestLocation();
         return () => {
             if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, []);
+    }, [requestLocation]);
 
     const startTracking = useCallback(() => {
         if (!mode) return;
@@ -243,8 +238,23 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
                     </button>
                 </div>
 
+                {locating && !position && (
+                    <div className="mt-3 flex items-center justify-center gap-2 px-3 py-3 bg-blue-50 text-blue-600 text-xs rounded-lg">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Acquiring your location...
+                    </div>
+                )}
+
                 {error && (
-                    <div className="mt-3 px-3 py-2 bg-red-50 text-red-600 text-xs rounded-lg">{error}</div>
+                    <div className="mt-3 px-3 py-3 bg-red-50 rounded-lg">
+                        <p className="text-red-600 text-xs">{error}</p>
+                        <button
+                            onClick={requestLocation}
+                            className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-medium rounded-lg transition-colors"
+                        >
+                            <RefreshCw className="w-3 h-3" /> Retry Location
+                        </button>
+                    </div>
                 )}
             </div>
         );
@@ -304,7 +314,12 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
                 </div>
 
                 {error && (
-                    <div className="mt-3 px-3 py-2 bg-red-50 text-red-600 text-xs rounded-lg">{error}</div>
+                    <div className="mt-3 px-3 py-3 bg-red-50 rounded-lg">
+                        <p className="text-red-600 text-xs">{error}</p>
+                        <button onClick={requestLocation} className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-medium rounded-lg transition-colors">
+                            <RefreshCw className="w-3 h-3" /> Retry Location
+                        </button>
+                    </div>
                 )}
             </div>
         );
@@ -415,7 +430,12 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
             </div>
 
             {error && (
-                <div className="mt-3 px-3 py-2 bg-red-50 text-red-600 text-xs rounded-lg">{error}</div>
+                <div className="mt-3 px-3 py-3 bg-red-50 rounded-lg">
+                    <p className="text-red-600 text-xs">{error}</p>
+                    <button onClick={requestLocation} className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-medium rounded-lg transition-colors">
+                        <RefreshCw className="w-3 h-3" /> Retry Location
+                    </button>
+                </div>
             )}
         </div>
     );
