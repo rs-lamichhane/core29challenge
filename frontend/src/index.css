@@ -6,13 +6,55 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
+  min-height: 100dvh;
   color: #1e293b;
   transition: background-color 0.3s, color 0.3s;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  overscroll-behavior-y: none;
+}
+
+/* Settings overlay backdrop */
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 49;
+  backdrop-filter: blur(2px);
+}
+
+/* Better touch targets for mobile */
+@media (max-width: 640px) {
+
+  button,
+  a,
+  select,
+  input[type="date"] {
+    min-height: 44px;
+  }
+
+  select {
+    font-size: 16px;
+    /* prevents iOS zoom */
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"] {
+    font-size: 16px;
+    /* prevents iOS zoom */
+  }
 }
 
 /* Dark mode */
@@ -21,31 +63,95 @@ html.dark body {
   color: #e2e8f0;
 }
 
-html.dark .bg-white { background-color: #1e293b !important; }
-html.dark .bg-gray-50 { background-color: #1e293b !important; }
-html.dark .bg-gray-100 { background-color: #334155 !important; }
-html.dark .border-gray-100 { border-color: #334155 !important; }
-html.dark .border-gray-200 { border-color: #475569 !important; }
-html.dark .text-gray-800 { color: #f1f5f9 !important; }
-html.dark .text-gray-700 { color: #e2e8f0 !important; }
-html.dark .text-gray-600 { color: #cbd5e1 !important; }
-html.dark .text-gray-500 { color: #94a3b8 !important; }
-html.dark .text-gray-400 { color: #64748b !important; }
-html.dark .bg-white\/80 { background-color: rgba(30, 41, 59, 0.9) !important; }
-html.dark .border-brand-100 { border-color: #065f46 !important; }
-html.dark .shadow-brand-100\/50 { --tw-shadow-color: rgba(6, 95, 70, 0.3) !important; }
-html.dark .bg-brand-50 { background-color: rgba(16, 185, 129, 0.1) !important; }
-html.dark select { background-color: #1e293b; color: #e2e8f0; }
-html.dark input { background-color: #1e293b; color: #e2e8f0; }
+html.dark .bg-white {
+  background-color: #1e293b !important;
+}
+
+html.dark .bg-gray-50 {
+  background-color: #1e293b !important;
+}
+
+html.dark .bg-gray-100 {
+  background-color: #334155 !important;
+}
+
+html.dark .border-gray-100 {
+  border-color: #334155 !important;
+}
+
+html.dark .border-gray-200 {
+  border-color: #475569 !important;
+}
+
+html.dark .text-gray-800 {
+  color: #f1f5f9 !important;
+}
+
+html.dark .text-gray-700 {
+  color: #e2e8f0 !important;
+}
+
+html.dark .text-gray-600 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+html.dark .text-gray-400 {
+  color: #64748b !important;
+}
+
+html.dark .bg-white\/80 {
+  background-color: rgba(30, 41, 59, 0.9) !important;
+}
+
+html.dark .border-brand-100 {
+  border-color: #065f46 !important;
+}
+
+html.dark .shadow-brand-100\/50 {
+  --tw-shadow-color: rgba(6, 95, 70, 0.3) !important;
+}
+
+html.dark .bg-brand-50 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+html.dark select {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+
+html.dark input {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
 
 /* Colour blind modes using SVG filters */
-[data-cb="protanopia"] { filter: url('#protanopia-filter'); }
-[data-cb="deuteranopia"] { filter: url('#deuteranopia-filter'); }
-[data-cb="tritanopia"] { filter: url('#tritanopia-filter'); }
+[data-cb="protanopia"] {
+  filter: url('#protanopia-filter');
+}
+
+[data-cb="deuteranopia"] {
+  filter: url('#deuteranopia-filter');
+}
+
+[data-cb="tritanopia"] {
+  filter: url('#tritanopia-filter');
+}
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in-up {
@@ -53,8 +159,15 @@ html.dark input { background-color: #1e293b; color: #e2e8f0; }
 }
 
 @keyframes pulse-green {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-  50% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
 }
 
 .pulse-green {
@@ -62,7 +175,9 @@ html.dark input { background-color: #1e293b; color: #e2e8f0; }
 }
 
 @keyframes fillUp {
-  from { width: 0%; }
+  from {
+    width: 0%;
+  }
 }
 
 .animate-fill {
@@ -71,22 +186,60 @@ html.dark input { background-color: #1e293b; color: #e2e8f0; }
 
 /* Smoke animation for high emissions */
 @keyframes smokeRise {
-  0% { transform: translateY(0) scale(0.5); opacity: 0; }
-  20% { opacity: 0.12; }
-  100% { transform: translateY(-120vh) scale(2.5); opacity: 0; }
+  0% {
+    transform: translateY(0) scale(0.5);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 0.12;
+  }
+
+  100% {
+    transform: translateY(-120vh) scale(2.5);
+    opacity: 0;
+  }
 }
 
 /* Leaf falling animation */
 @keyframes leafFall {
-  0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0;
+  }
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-html.dark ::-webkit-scrollbar-thumb { background: #475569; }
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}

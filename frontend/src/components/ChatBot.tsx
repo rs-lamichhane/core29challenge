@@ -170,7 +170,7 @@ export default function ChatBot() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-5 right-5 z-40 w-14 h-14 bg-brand-500 hover:bg-brand-600 text-white rounded-full shadow-xl shadow-brand-200 flex items-center justify-center transition-colors"
+            className="fixed bottom-5 right-5 z-40 w-14 h-14 bg-brand-500 hover:bg-brand-600 text-white rounded-full shadow-xl shadow-brand-200 flex items-center justify-center transition-colors" style={{ marginBottom: 'env(safe-area-inset-bottom, 0)' }}
           >
             <MessageCircle className="w-6 h-6" />
           </motion.button>
@@ -235,16 +235,16 @@ export default function ChatBot() {
                 >
                   <div
                     className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center ${msg.role === 'bot'
-                        ? 'bg-brand-100 text-brand-600'
-                        : 'bg-blue-100 text-blue-600'
+                      ? 'bg-brand-100 text-brand-600'
+                      : 'bg-blue-100 text-blue-600'
                       }`}
                   >
                     {msg.role === 'bot' ? <Bot className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
                   </div>
                   <div
                     className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${msg.role === 'bot'
-                        ? 'bg-gray-100 text-gray-800 rounded-tl-sm'
-                        : 'bg-brand-500 text-white rounded-tr-sm'
+                      ? 'bg-gray-100 text-gray-800 rounded-tl-sm'
+                      : 'bg-brand-500 text-white rounded-tr-sm'
                       }`}
                   >
                     {msg.text.split('\n').map((line, i) => (
@@ -275,7 +275,7 @@ export default function ChatBot() {
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSubmit} className="px-3 py-3 border-t border-gray-100 bg-white">
+            <form onSubmit={handleSubmit} className="px-3 py-3 border-t border-gray-100 bg-white" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0))' }}>
               <div className="flex gap-2">
                 <input
                   ref={inputRef}

@@ -13,15 +13,15 @@ interface HeaderProps {
 export default function Header({ view, onNavigate, demoMode, onToggleDemo, summary, userName, onLogout }: HeaderProps) {
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-brand-100 sticky top-0 z-50">
-      <div className="max-w-4xl mx-auto px-4 py-3">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('input')}>
             <div className="w-9 h-9 bg-brand-500 rounded-xl flex items-center justify-center">
               <Leaf className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-brand-800 leading-tight">GreenApp</h1>
-              <p className="text-[10px] text-brand-600 -mt-0.5">Core29 Sustainability</p>
+              <h1 className="text-base sm:text-lg font-bold text-brand-800 leading-tight">GreenApp</h1>
+              <p className="text-[10px] text-brand-600 -mt-0.5 hidden sm:block">Core29 Sustainability</p>
             </div>
           </div>
 
@@ -57,14 +57,14 @@ export default function Header({ view, onNavigate, demoMode, onToggleDemo, summa
             <button
               onClick={onToggleDemo}
               className={`text-xs px-2.5 py-1 rounded-full font-medium transition-all ${demoMode
-                  ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300'
-                  : 'bg-gray-100 text-gray-500'
+                ? 'bg-brand-100 text-brand-700 ring-1 ring-brand-300'
+                : 'bg-gray-100 text-gray-500'
                 }`}
             >
               {demoMode ? '✨ Demo' : 'Demo'}
             </button>
 
-            <nav className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
+            <nav className="flex gap-0.5 sm:gap-1 bg-gray-100 rounded-lg p-0.5">
               <NavBtn
                 active={view === 'input'}
                 onClick={() => onNavigate('input')}
@@ -99,9 +99,9 @@ function NavBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${active
-          ? 'bg-white text-brand-700 shadow-sm'
-          : 'text-gray-500 hover:text-gray-700'
+      className={`flex items-center gap-1 px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium transition-all ${active
+        ? 'bg-white text-brand-700 shadow-sm'
+        : 'text-gray-500 hover:text-gray-700'
         }`}
     >
       {icon}

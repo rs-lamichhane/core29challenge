@@ -59,17 +59,17 @@ export default function ResultsComparison({ result, onLogAnother, onViewDashboar
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className={`rounded-2xl p-6 text-center ${getHeroStyle()}`}
+        className={`rounded-2xl p-4 sm:p-6 text-center ${getHeroStyle()}`}
       >
-        <div className="text-4xl mb-2">{getHeroEmoji()}</div>
-        <h2 className="text-2xl font-bold">{getHeroMessage()}</h2>
+        <div className="text-3xl sm:text-4xl mb-2">{getHeroEmoji()}</div>
+        <h2 className="text-xl sm:text-2xl font-bold leading-tight">{getHeroMessage()}</h2>
         <p className="text-white/80 text-sm mt-1">
           {journey.distance_km} km by {modeInfo.label.toLowerCase()}
         </p>
       </motion.div>
 
       {/* Side-by-side comparison cards */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <ComparisonCard
           title={`Your choice: ${modeInfo.label}`}
           icon={modeInfo.icon}
@@ -244,9 +244,8 @@ function DeltaChip({ label, value, positive, icon }: {
   label: string; value: string; positive: boolean; icon: React.ReactNode;
 }) {
   return (
-    <div className={`rounded-xl p-3 text-center ${
-      positive ? 'bg-brand-50 border border-brand-200' : 'bg-red-50 border border-red-200'
-    }`}>
+    <div className={`rounded-xl p-3 text-center ${positive ? 'bg-brand-50 border border-brand-200' : 'bg-red-50 border border-red-200'
+      }`}>
       <div className={`flex items-center justify-center gap-1 mb-1 ${positive ? 'text-brand-600' : 'text-red-500'}`}>
         {icon}
       </div>
@@ -260,7 +259,7 @@ function ChartCard({ title, data }: { title: string; data: any[] }) {
   return (
     <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
       <h4 className="text-xs font-semibold text-gray-600 mb-3">{title}</h4>
-      <ResponsiveContainer width="100%" height={140}>
+      <ResponsiveContainer width="100%" height={120}>
         <BarChart data={data} barSize={36}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
           <XAxis dataKey="name" tick={{ fontSize: 11 }} />

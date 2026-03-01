@@ -40,7 +40,7 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
   const [loadingDistance, setLoadingDistance] = useState(false);
 
   useEffect(() => {
-    api.getLocations().then(setLocations).catch(() => {});
+    api.getLocations().then(setLocations).catch(() => { });
   }, []);
 
   // Auto-calculate distance when both locations selected
@@ -158,7 +158,7 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
     <div className="mt-6 animate-fade-in-up">
       {/* Hero */}
       <div className="text-center mb-6">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-800">
+        <h2 className="text-xl sm:text-3xl font-extrabold text-gray-800">
           How did you <span className="text-brand-500">commute</span> today?
         </h2>
         <p className="text-gray-500 mt-1 text-sm">
@@ -317,18 +317,17 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
         {/* Transport mode selector */}
         <div className="p-5 border-b border-gray-100">
           <label className="text-xs font-medium text-gray-500 mb-3 block">Transport Mode</label>
-          <div className={`grid gap-2 ${availableModes.length <= 6 ? 'grid-cols-3 sm:grid-cols-6' : 'grid-cols-4 sm:grid-cols-8'}`}>
+          <div className={`grid gap-2 ${availableModes.length <= 6 ? 'grid-cols-3 sm:grid-cols-6' : 'grid-cols-3 sm:grid-cols-4 md:grid-cols-8'}`}>
             {availableModes.map(m => (
               <button
                 key={m.key}
                 onClick={() => setMode(m.key)}
-                className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
-                  mode === m.key
+                className={`flex flex-col items-center gap-0.5 sm:gap-1 p-2.5 sm:p-3 rounded-xl border-2 transition-all ${mode === m.key
                     ? 'border-brand-400 bg-brand-50 shadow-md shadow-brand-100'
                     : 'border-gray-100 bg-gray-50 hover:border-gray-200'
-                }`}
+                  }`}
               >
-                <span className="text-2xl">{m.icon}</span>
+                <span className="text-xl sm:text-2xl">{m.icon}</span>
                 <span className={`text-[11px] font-medium ${mode === m.key ? 'text-brand-700' : 'text-gray-600'}`}>
                   {m.label}
                 </span>
@@ -383,9 +382,8 @@ function LocationSelect({ value, onChange, placeholder, aberdeenLocations, gener
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
-      className={`w-full px-3 py-2.5 bg-gray-50 rounded-lg text-sm border border-transparent focus:border-brand-300 focus:bg-white outline-none transition-all appearance-none cursor-pointer ${
-        !value ? 'text-gray-400' : 'text-gray-700 font-medium'
-      }`}
+      className={`w-full px-3 py-2.5 bg-gray-50 rounded-lg text-sm border border-transparent focus:border-brand-300 focus:bg-white outline-none transition-all appearance-none cursor-pointer ${!value ? 'text-gray-400' : 'text-gray-700 font-medium'
+        }`}
     >
       <option value="">{placeholder}</option>
       {aberdeenLocations.length > 0 && (

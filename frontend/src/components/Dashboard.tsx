@@ -68,11 +68,10 @@ export default function Dashboard({ userId, summary, onRefresh }: Props) {
             initial={{ width: 0 }}
             animate={{ width: `${goalProgress}%` }}
             transition={{ duration: 1, ease: 'easeOut' }}
-            className={`h-full rounded-full ${
-              goalProgress >= 100
+            className={`h-full rounded-full ${goalProgress >= 100
                 ? 'bg-gradient-to-r from-brand-400 to-emerald-400'
                 : 'bg-gradient-to-r from-brand-400 to-brand-500'
-            }`}
+              }`}
           />
         </div>
         <div className="flex justify-between mt-2 text-xs text-gray-500">
@@ -95,16 +94,15 @@ export default function Dashboard({ userId, summary, onRefresh }: Props) {
           <Trophy className="w-4 h-4 text-yellow-500" />
           Achievements
         </h3>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
           {achievements.map(a => (
             <motion.div
               key={a.id}
               whileHover={{ scale: 1.05 }}
-              className={`rounded-xl p-3 text-center border transition-all ${
-                a.earned
+              className={`rounded-xl p-3 text-center border transition-all ${a.earned
                   ? 'bg-yellow-50 border-yellow-200 shadow-sm'
                   : 'bg-gray-50 border-gray-100 opacity-50'
-              }`}
+                }`}
             >
               <div className="text-2xl mb-1">{a.icon}</div>
               <div className="text-[10px] font-semibold text-gray-700 leading-tight">{a.title}</div>
@@ -125,9 +123,8 @@ export default function Dashboard({ userId, summary, onRefresh }: Props) {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${
-                  activeTab === tab ? 'bg-white shadow-sm text-brand-700' : 'text-gray-500'
-                }`}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === tab ? 'bg-white shadow-sm text-brand-700' : 'text-gray-500'
+                  }`}
               >
                 {tab === 'co2' ? '🌱 CO₂ Saved' : tab === 'calories' ? '🔥 Calories' : '⚡ Streaks'}
               </button>
@@ -136,8 +133,8 @@ export default function Dashboard({ userId, summary, onRefresh }: Props) {
           <LeaderboardList
             data={
               activeTab === 'co2' ? leaderboards.co2 :
-              activeTab === 'calories' ? leaderboards.calories :
-              leaderboards.streaks
+                activeTab === 'calories' ? leaderboards.calories :
+                  leaderboards.streaks
             }
             type={activeTab}
             currentUserId={userId}
@@ -201,7 +198,7 @@ function StreakWidget({ streak }: { streak: any }) {
         <Zap className="w-4 h-4 text-purple-500" />
         Sustainable Streak
       </h3>
-      <div className="flex items-center gap-6 mb-4">
+      <div className="flex items-center gap-4 sm:gap-6 mb-4">
         <div className="text-center">
           <div className="text-3xl font-extrabold text-purple-600">{current}</div>
           <div className="text-[10px] text-gray-500">Current days</div>
@@ -215,11 +212,10 @@ function StreakWidget({ streak }: { streak: any }) {
         {milestones.map(m => (
           <div
             key={m}
-            className={`flex-1 py-2 rounded-lg text-center text-xs font-medium border ${
-              current >= m
+            className={`flex-1 py-2 rounded-lg text-center text-xs font-medium border ${current >= m
                 ? 'bg-purple-100 border-purple-300 text-purple-700'
                 : 'bg-gray-50 border-gray-200 text-gray-400'
-            }`}
+              }`}
           >
             {current >= m ? '✅' : '🔒'} {m}-day
           </div>
@@ -242,15 +238,14 @@ function LeaderboardList({ data, type, currentUserId }: { data: any[]; type: str
         const value = type === 'co2'
           ? `${(entry.total_co2_saved_g / 1000).toFixed(1)} kg`
           : type === 'calories'
-          ? `${Math.round(entry.total_calories)} kcal`
-          : `${entry.best_streak}d best`;
+            ? `${Math.round(entry.total_calories)} kcal`
+            : `${entry.best_streak}d best`;
 
         return (
           <div
             key={entry.id}
-            className={`flex items-center justify-between py-2 px-3 rounded-lg ${
-              isYou ? 'bg-brand-50 border border-brand-200' : 'hover:bg-gray-50'
-            }`}
+            className={`flex items-center justify-between py-2 px-3 rounded-lg ${isYou ? 'bg-brand-50 border border-brand-200' : 'hover:bg-gray-50'
+              }`}
           >
             <div className="flex items-center gap-3">
               <span className="text-sm w-6 text-center">{medal}</span>
