@@ -14,8 +14,8 @@ router.post('/journeys', async (req: Request, res: Response) => {
     if (!user_id || !distance_km || !mode) {
       return res.status(400).json({ error: 'user_id, distance_km, and mode are required' });
     }
-    if (typeof distance_km !== 'number' || distance_km <= 0 || distance_km > 500) {
-      return res.status(400).json({ error: 'distance_km must be between 0 and 500' });
+    if (typeof distance_km !== 'number' || distance_km <= 0) {
+      return res.status(400).json({ error: 'distance_km must be greater than 0' });
     }
     if (!VALID_MODES.includes(mode)) {
       return res.status(400).json({ error: `mode must be one of: ${VALID_MODES.join(', ')}` });

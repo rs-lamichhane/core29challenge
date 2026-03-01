@@ -59,4 +59,33 @@ export const api = {
 
   setWeeklyGoal: (userId: number, target: number) =>
     fetchJSON('/goals', { method: 'POST', body: JSON.stringify({ user_id: userId, target_co2_saved_g: target }) }),
+
+  // Friend Battles
+  getBattles: (userId: number) =>
+    fetchJSON(`/battles?user_id=${userId}`),
+
+  createBattle: (challengerId: number, opponentName: string, durationDays?: number) =>
+    fetchJSON('/battles', { method: 'POST', body: JSON.stringify({ challenger_id: challengerId, opponent_name: opponentName, duration_days: durationDays }) }),
+
+  acceptBattle: (battleId: number, userId: number) =>
+    fetchJSON(`/battles/${battleId}/accept`, { method: 'POST', body: JSON.stringify({ user_id: userId }) }),
+
+  declineBattle: (battleId: number, userId: number) =>
+    fetchJSON(`/battles/${battleId}/decline`, { method: 'POST', body: JSON.stringify({ user_id: userId }) }),
+
+  updateBattleScores: (userId: number) =>
+    fetchJSON('/battles/update-scores', { method: 'POST', body: JSON.stringify({ user_id: userId }) }),
+
+  searchUsers: (query: string, currentUserId: number) =>
+    fetchJSON(`/battles/search-users?q=${encodeURIComponent(query)}&user_id=${currentUserId}`),
+
+  // Push Notifications
+  subscribeNotifications: (userId: number, subscription: any) =>
+    fetchJSON('/notifications/subscribe', { method: 'POST', body: JSON.stringify({ user_id: userId, subscription }) }),
+
+  unsubscribeNotifications: (userId: number) =>
+    fetchJSON('/notifications/unsubscribe', { method: 'POST', body: JSON.stringify({ user_id: userId }) }),
+
+  getNotificationStatus: (userId: number) =>
+    fetchJSON(`/notifications/status?user_id=${userId}`),
 };

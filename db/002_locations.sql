@@ -17,6 +17,8 @@ INSERT INTO locations (name, category, lat, lng) VALUES
   ('Kingswells',                'aberdeen', 57.1580, -2.1930),
   ('Westhill',                  'aberdeen', 57.1540, -2.2690),
   ('Aberdeen Airport',          'aberdeen', 57.2019, -2.1978),
+  ('Aberdeen Harbour',          'aberdeen', 57.1430, -2.0770),
+  ('Aberdeen Ferry Terminal',   'aberdeen', 57.1425, -2.0755),
   -- Generic locations
   ('Home',                      'generic',  NULL, NULL),
   ('Office',                    'generic',  NULL, NULL),

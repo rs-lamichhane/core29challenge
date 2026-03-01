@@ -9,6 +9,8 @@ import achievementsRouter from './routes/achievements';
 import goalsRouter from './routes/goals';
 import authRouter from './routes/auth';
 import locationsRouter from './routes/locations';
+import battlesRouter from './routes/battles';
+import notificationsRouter from './routes/notifications';
 
 dotenv.config();
 
@@ -27,6 +29,8 @@ app.use('/api', achievementsRouter);
 app.use('/api', goalsRouter);
 app.use('/api', authRouter);
 app.use('/api', locationsRouter);
+app.use('/api', battlesRouter);
+app.use('/api', notificationsRouter);
 
 app.listen(PORT, () => {
   console.log(`🌱 Core29 Sustainability API running on http://localhost:${PORT}`);

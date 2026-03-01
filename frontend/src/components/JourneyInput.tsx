@@ -70,14 +70,37 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
       .finally(() => setLoadingDistance(false));
   }, [startLocationId, endLocationId]);
 
+  // Determine which modes to show based on distance and route
+  const currentDistance = parseFloat(distance) || 0;
+  const PLANE_MIN_DISTANCE = 50; // Only show plane for 50km+ (long distance)
+
+  // Check if route involves water locations
+  const waterLocationNames = ['Aberdeen Harbour', 'Ferry Terminal', 'Port', 'harbour', 'ferry', 'port', 'island', 'Island'];
+  const startLoc = locations.find(l => l.id === parseInt(startLocationId));
+  const endLoc = locations.find(l => l.id === parseInt(endLocationId));
+  const isWaterRoute = startLoc && endLoc && (
+    waterLocationNames.some(w => startLoc.name.toLowerCase().includes(w.toLowerCase())) ||
+    waterLocationNames.some(w => endLoc.name.toLowerCase().includes(w.toLowerCase()))
+  );
+
+  const availableModes = TRANSPORT_MODES.filter(m => {
+    if (m.key === 'boat') return isWaterRoute; // Only show boat for water routes
+    if (m.key === 'plane') return currentDistance >= PLANE_MIN_DISTANCE; // Only show plane for long distance
+    return true;
+  });
+
+  // If the currently selected mode becomes unavailable, reset to cycle
+  useEffect(() => {
+    const modeStillAvailable = availableModes.some(m => m.key === mode);
+    if (!modeStillAvailable && (mode === 'boat' || mode === 'plane')) {
+      setMode('cycle');
+    }
+  }, [currentDistance, isWaterRoute]);
+
   const handleSubmit = async () => {
     const d = parseFloat(distance);
     if (isNaN(d) || d <= 0) {
       setError('Please enter a valid distance');
-      return;
-    }
-    if (d > 500) {
-      setError('Distance must be under 500 km');
       return;
     }
     setError('');
@@ -271,7 +294,7 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
               <input
                 type="number"
                 min="0.1"
-                max="500"
+                max="99999"
                 step="0.1"
                 value={distance}
                 onChange={e => { setDistance(e.target.value); setDistanceAuto(false); }}
@@ -294,8 +317,8 @@ export default function JourneyInput({ userId, demoMode, onJourneyLogged }: Prop
         {/* Transport mode selector */}
         <div className="p-5 border-b border-gray-100">
           <label className="text-xs font-medium text-gray-500 mb-3 block">Transport Mode</label>
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-            {TRANSPORT_MODES.map(m => (
+          <div className={`grid gap-2 ${availableModes.length <= 6 ? 'grid-cols-3 sm:grid-cols-6' : 'grid-cols-4 sm:grid-cols-8'}`}>
+            {availableModes.map(m => (
               <button
                 key={m.key}
                 onClick={() => setMode(m.key)}

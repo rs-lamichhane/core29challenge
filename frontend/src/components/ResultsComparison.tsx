@@ -12,10 +12,36 @@ interface Props {
 export default function ResultsComparison({ result, onLogAnother, onViewDashboard }: Props) {
   const { journey, results, impact_equivalents, calorie_equivalents, new_achievements } = result;
   const modeInfo = getModeInfo(journey.mode);
+  const isDriving = journey.mode === 'drive';
   const isSustainable = results.vs_drive_co2_saved_g > 0;
+  const isHighEmission = journey.mode === 'plane' || journey.mode === 'boat';
+
+  // Hero message logic - fixed for plane/boat which can emit MORE than driving
+  const getHeroMessage = () => {
+    if (isDriving) return 'You drove — next time try a greener option!';
+    if (isHighEmission && !isSustainable) {
+      return `Your ${modeInfo.label.toLowerCase()} trip produced ${((results.co2_g - results.drive_co2_g) / 1000).toFixed(2)} kg more CO₂ than driving`;
+    }
+    if (isSustainable) return `You saved ${(results.vs_drive_co2_saved_g / 1000).toFixed(2)} kg CO₂!`;
+    return 'Consider a greener option next time!';
+  };
+
+  const getHeroEmoji = () => {
+    if (isDriving) return '🚗';
+    if (isHighEmission && !isSustainable) return modeInfo.icon;
+    if (isSustainable) return '🌍';
+    return '🚗';
+  };
+
+  const getHeroStyle = () => {
+    if (isDriving) return 'bg-gradient-to-br from-gray-500 to-gray-600 text-white';
+    if (isHighEmission && !isSustainable) return 'bg-gradient-to-br from-orange-500 to-amber-600 text-white';
+    if (isSustainable) return 'bg-gradient-to-br from-brand-500 to-emerald-600 text-white';
+    return 'bg-gradient-to-br from-gray-500 to-gray-600 text-white';
+  };
 
   const co2Data = [
-    { name: `${modeInfo.icon} ${modeInfo.label}`, value: results.co2_g, fill: '#10B981' },
+    { name: `${modeInfo.icon} ${modeInfo.label}`, value: results.co2_g, fill: isSustainable ? '#10B981' : '#F59E0B' },
     { name: '🚗 Driving', value: results.drive_co2_g, fill: '#EF4444' },
   ];
 
@@ -33,18 +59,10 @@ export default function ResultsComparison({ result, onLogAnother, onViewDashboar
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className={`rounded-2xl p-6 text-center ${
-          isSustainable
-            ? 'bg-gradient-to-br from-brand-500 to-emerald-600 text-white'
-            : 'bg-gradient-to-br from-gray-500 to-gray-600 text-white'
-        }`}
+        className={`rounded-2xl p-6 text-center ${getHeroStyle()}`}
       >
-        <div className="text-4xl mb-2">{isSustainable ? '🌍' : '🚗'}</div>
-        <h2 className="text-2xl font-bold">
-          {isSustainable
-            ? `You saved ${(results.vs_drive_co2_saved_g / 1000).toFixed(2)} kg CO₂!`
-            : `You drove — next time try a greener option!`}
-        </h2>
+        <div className="text-4xl mb-2">{getHeroEmoji()}</div>
+        <h2 className="text-2xl font-bold">{getHeroMessage()}</h2>
         <p className="text-white/80 text-sm mt-1">
           {journey.distance_km} km by {modeInfo.label.toLowerCase()}
         </p>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from './utils/api';
 import { SettingsProvider, useSettings } from './utils/SettingsContext';
+import { notifyAchievement, notifyStreak, notifyWeeklyGoal } from './utils/notifications';
 import AuthPage from './components/AuthPage';
 import Header from './components/Header';
 import JourneyInput from './components/JourneyInput';
@@ -11,6 +12,7 @@ import ChatBot from './components/ChatBot';
 import SettingsPanel from './components/SettingsPanel';
 import DynamicBackground from './components/DynamicBackground';
 import LanguageBar from './components/LanguageBar';
+import FriendBattle from './components/FriendBattle';
 
 type View = 'input' | 'results' | 'dashboard';
 
@@ -50,6 +52,15 @@ function AppInner() {
       const s = await api.getUserSummary(user.id);
       setSummary(s);
       setTotalCo2Saved(s.total_co2_saved_g || 0);
+      // Notify on streak milestones
+      const streak = s.streak?.current_streak || 0;
+      if ([3, 7, 14, 30].includes(streak)) notifyStreak(streak);
+      // Notify on weekly goal progress
+      const wg = s.weekly_goal;
+      if (wg) {
+        const pct = (wg.progress_g / wg.target_g) * 100;
+        if (pct >= 75) notifyWeeklyGoal(pct);
+      }
     } catch {}
   }, [user, setTotalCo2Saved]);
 
@@ -90,8 +101,14 @@ function AppInner() {
     if (result.new_achievements?.length > 0) {
       setToastAchievements(result.new_achievements);
       setTimeout(() => setToastAchievements([]), 5000);
+      // Push notifications for achievements
+      result.new_achievements.forEach((a: any) => {
+        notifyAchievement(a.title, a.description);
+      });
     }
     await refreshSummary();
+    // Update battle scores after logging a journey
+    try { await api.updateBattleScores(userId); } catch {}
   };
 
   const handleNavigate = (v: View) => {
@@ -118,6 +135,11 @@ function AppInner() {
       />
 
       <main className="max-w-4xl mx-auto px-4 pb-8">
+        {/* Friend Battle button bar */}
+        <div className="flex items-center justify-end gap-2 mt-3 mb-1">
+          <FriendBattle userId={userId} userName={user.name} />
+        </div>
+
         {view === 'input' && (
           <JourneyInput userId={userId} demoMode={demoMode} onJourneyLogged={handleJourneyLogged} />
         )}
