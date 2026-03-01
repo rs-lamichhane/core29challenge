@@ -69,8 +69,8 @@ export default function Dashboard({ userId, summary, onRefresh }: Props) {
             animate={{ width: `${goalProgress}%` }}
             transition={{ duration: 1, ease: 'easeOut' }}
             className={`h-full rounded-full ${goalProgress >= 100
-                ? 'bg-gradient-to-r from-brand-400 to-emerald-400'
-                : 'bg-gradient-to-r from-brand-400 to-brand-500'
+              ? 'bg-gradient-to-r from-brand-400 to-emerald-400'
+              : 'bg-gradient-to-r from-brand-400 to-brand-500'
               }`}
           />
         </div>
@@ -100,8 +100,8 @@ export default function Dashboard({ userId, summary, onRefresh }: Props) {
               key={a.id}
               whileHover={{ scale: 1.05 }}
               className={`rounded-xl p-3 text-center border transition-all ${a.earned
-                  ? 'bg-yellow-50 border-yellow-200 shadow-sm'
-                  : 'bg-gray-50 border-gray-100 opacity-50'
+                ? 'bg-yellow-50 border-yellow-200 shadow-sm'
+                : 'bg-gray-50 border-gray-100 opacity-50'
                 }`}
             >
               <div className="text-2xl mb-1">{a.icon}</div>
@@ -155,7 +155,17 @@ export default function Dashboard({ userId, summary, onRefresh }: Props) {
                     <span className="text-lg">{mi.icon}</span>
                     <div>
                       <span className="text-xs font-medium text-gray-700">{j.distance_km} km {mi.label}</span>
-                      <span className="text-[10px] text-gray-400 ml-2">{j.date}</span>
+                      <span className="text-[10px] text-gray-400 ml-2">
+                        {(() => {
+                          const d = new Date(j.date);
+                          const now = new Date();
+                          const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+                          if (diffDays === 0) return 'Today';
+                          if (diffDays === 1) return 'Yesterday';
+                          if (diffDays < 7) return d.toLocaleDateString('en-GB', { weekday: 'short' });
+                          return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                        })()}
+                      </span>
                     </div>
                   </div>
                   <div className="text-xs text-brand-600 font-semibold">
@@ -213,8 +223,8 @@ function StreakWidget({ streak }: { streak: any }) {
           <div
             key={m}
             className={`flex-1 py-2 rounded-lg text-center text-xs font-medium border ${current >= m
-                ? 'bg-purple-100 border-purple-300 text-purple-700'
-                : 'bg-gray-50 border-gray-200 text-gray-400'
+              ? 'bg-purple-100 border-purple-300 text-purple-700'
+              : 'bg-gray-50 border-gray-200 text-gray-400'
               }`}
           >
             {current >= m ? '✅' : '🔒'} {m}-day

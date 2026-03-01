@@ -108,33 +108,21 @@ export default function SettingsPanel() {
                     <Accessibility className="w-3.5 h-3.5" /> Accessibility
                   </h4>
                   <div className="space-y-2">
-                    {/* Colour Vision options */}
+                    {/* Colour Vision dropdown */}
                     <div>
                       <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1.5">
                         <Eye className="w-3 h-3" /> Colour Vision
                       </p>
-                      <div className="space-y-1.5">
+                      <select
+                        value={colorBlindMode}
+                        onChange={(e) => { setColorBlindMode(e.target.value as ColorBlindMode); speak(`Colour vision mode: ${e.target.value}`); }}
+                        className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 rounded-xl border-2 border-gray-100 dark:border-gray-700 focus:border-brand-400 outline-none transition-all cursor-pointer appearance-none"
+                        style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
+                      >
                         {colorBlindOptions.map(opt => (
-                          <button
-                            key={opt.key}
-                            onClick={() => { setColorBlindMode(opt.key); speak(`Colour vision mode: ${opt.label}`); }}
-                            className={`w-full flex items-center justify-between p-2.5 rounded-xl border-2 transition-all ${colorBlindMode === opt.key
-                              ? 'border-brand-400 bg-brand-50 dark:bg-brand-900/30 dark:border-brand-500'
-                              : 'border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:border-gray-200'
-                              }`}
-                          >
-                            <div className="text-left">
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{opt.label}</span>
-                              <p className="text-[10px] text-gray-400">{opt.desc}</p>
-                            </div>
-                            {colorBlindMode === opt.key && (
-                              <div className="w-5 h-5 bg-brand-500 rounded-full flex items-center justify-center">
-                                <span className="text-white text-xs">✓</span>
-                              </div>
-                            )}
-                          </button>
+                          <option key={opt.key} value={opt.key}>{opt.label} — {opt.desc}</option>
                         ))}
-                      </div>
+                      </select>
                     </div>
 
                     {/* Divider */}
@@ -234,8 +222,8 @@ export default function SettingsPanel() {
                                   setLangOpen(false);
                                 }}
                                 className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors border-b border-gray-50 dark:border-gray-700 last:border-0 ${language === code
-                                    ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 font-semibold'
-                                    : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
+                                  ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 font-semibold'
+                                  : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
                                   }`}
                               >
                                 <span className="text-base">{flag}</span>

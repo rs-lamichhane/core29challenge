@@ -76,17 +76,56 @@ export default function LiveTracker({ userId, demoMode, onJourneyComplete, onCan
     const startTimeRef = useRef<number>(0);
     const lastPosRef = useRef<LatLng | null>(null);
 
-    // Get initial position on mount
+    // Get initial position on mount - properly handle permissions
     useEffect(() => {
-        if ('geolocation' in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                () => setError('Location access denied. Please enable GPS.'),
-                { enableHighAccuracy: true }
-            );
-        } else {
+        if (!('geolocation' in navigator)) {
             setError('Geolocation not supported by this browser.');
+            return;
         }
+
+        const requestLocation = () => {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                    setError('');
+                },
+                (err) => {
+                    if (err.code === 1) {
+                        setError('📍 Location permission denied. Please allow location access in your browser settings and reload the page.');
+                    } else if (err.code === 2) {
+                        setError('📍 Location unavailable. Make sure GPS/Location is turned on in your device settings.');
+                    } else {
+                        setError('📍 Location request timed out. Please check your GPS signal and try again.');
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        };
+
+        // Check permission state first (if supported)
+        if ('permissions' in navigator) {
+            navigator.permissions.query({ name: 'geolocation' }).then(result => {
+                if (result.state === 'denied') {
+                    setError('📍 Location access is blocked. To enable, go to your browser settings → Site Settings → Location, and allow access for this site.');
+                } else {
+                    // 'prompt' or 'granted' — call getCurrentPosition which will trigger the prompt if needed
+                    requestLocation();
+                }
+                // Watch for future changes
+                result.onchange = () => {
+                    if (result.state === 'granted') {
+                        setError('');
+                        requestLocation();
+                    }
+                };
+            }).catch(() => {
+                // permissions API not available, just try directly
+                requestLocation();
+            });
+        } else {
+            requestLocation();
+        }
+
         return () => {
             if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
             if (timerRef.current) clearInterval(timerRef.current);
